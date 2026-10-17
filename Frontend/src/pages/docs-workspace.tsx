@@ -1,0 +1,1381 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen.tsx'
+import { Link, Navigate, useParams } from 'react-router-dom'
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Plus,
+  Search,
+  Trash2,
+  X,
+  Terminal,
+  ArrowRight,
+  ArrowLeft,
+  AlignLeft,
+  Home,
+} from 'lucide-react'
+
+import {
+  fetchDoc,
+  setDoc,
+  addSubtopic,
+  addContent,
+  type NotesState,
+  type StoredFolder,
+} from '../store/slices/notesSlice.ts'
+
+import type { Doc, Topic, Subtopic, Content } from '../lib/docs-data'
+
+/* -----------------------------------------------------------------------------
+ * Shared Tailwind class strings (light / dark)
+ * paper  #ffffff / #1b1a20     ink    #28262e / #eeeaf4
+ * muted  #716d79 / #aaa4b5     line   #eeecf2 / #302c38
+ * soft   #f7f6f9 / #24212b     active #f0ecf8 / #30283f
+ * accent #6950a8 / #c1a5ef
+ *
+ * For `dark:` to follow your `.dark` class in Tailwind v4, add once to CSS:
+ *   @custom-variant dark (&:where(.dark, .dark *));
+ * -------------------------------------------------------------------------- */
+
+const LINE = 'border-[#eeecf2] dark:border-[#302c38]'
+const MUTED = 'text-[#716d79] dark:text-[#aaa4b5]'
+const INK = 'text-[#28262e] dark:text-[#eeeaf4]'
+const PAPER = 'bg-white dark:bg-[#1b1a20]'
+const SOFT = 'bg-[#f7f6f9] dark:bg-[#24212b]'
+const ACTIVE = 'bg-[#f0ecf8] dark:bg-[#30283f]'
+const ACCENT = 'text-[#6950a8] dark:text-[#c1a5ef]'
+const HOVER_SOFT = 'hover:bg-[#f7f6f9] dark:hover:bg-[#24212b]'
+const HOVER_ACTIVE = 'hover:bg-[#f0ecf8] dark:hover:bg-[#30283f]'
+const FOCUS =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6950a8] dark:focus-visible:outline-[#c1a5ef]'
+const DANGER = 'text-red-600 dark:text-red-400'
+const REVEAL = 'opacity-0 [@media(hover:none)]:opacity-100'
+const PRIMARY_BTN =
+  'bg-[#6950a8] text-white shadow-md shadow-[#6950a8]/20 transition-colors hover:bg-[#7a60bf] disabled:cursor-not-allowed disabled:opacity-50'
+const FIELD =
+  'border bg-[#f7f6f9]/60 px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-[#716d79] focus:border-[#6950a8] focus:ring-2 focus:ring-[#6950a8]/20 dark:bg-[#24212b]/60 dark:placeholder:text-[#aaa4b5] dark:focus:border-[#c1a5ef] dark:focus:ring-[#c1a5ef]/20'
+
+// -----------------------------------------------------------------------------
+// Types
+// -----------------------------------------------------------------------------
+
+type RootState = {
+  notes: NotesState
+}
+
+type DeleteModalState = {
+  type: 'topic' | 'subtopic' | 'content'
+  id: string
+  title: string
+  parentTopicId?: string
+}
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+
+const createId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return Math.random().toString(36).slice(2, 11)
+}
+
+/** Turns "my-react_notes" into "My React Notes". */
+const humanize = (value: string) =>
+  value
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim()
+
+/** Detects database-style ids so they are never shown as a folder name. */
+const looksLikeGeneratedId = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ||
+  /^c[a-z0-9]{20,}$/i.test(value) ||
+  /^[0-9a-f]{20,}$/i.test(value) ||
+  /^\d+$/.test(value)
+
+/** Reads the display name from a folder (`name`, `title` or `label`). */
+const getFolderName = (folder?: StoredFolder | null): string => {
+  if (!folder) return ''
+
+  const source = folder as StoredFolder & {
+    title?: string
+    label?: string
+  }
+
+  return String(source.name ?? source.title ?? source.label ?? '').trim()
+}
+
+/** Language key used for code blocks, derived from the folder NAME. */
+const getLanguageKey = (label: string) => {
+  const key = label.toLowerCase().replace(/[^a-z0-9+#]/g, '')
+  if (key === 'react' || key === 'reactjs') return 'tsx'
+  return key || 'text'
+}
+
+// -----------------------------------------------------------------------------
+// Component
+// -----------------------------------------------------------------------------
+
+export default function DocsWorkspace() {
+  const { folderId } = useParams<{ folderId: string }>()
+
+  if (!folderId) {
+    return <Navigate to="/notes" replace />
+  }
+
+  return <DocsWorkspaceContent folderId={folderId} />
+}
+
+// -----------------------------------------------------------------------------
+// Workspace content
+// -----------------------------------------------------------------------------
+
+function DocsWorkspaceContent({ folderId }: { folderId: string }) {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    dispatch(fetchDoc(folderId))
+  }, [dispatch, folderId])
+
+  const mainScrollRef = useRef<HTMLElement | null>(null)
+
+  // ---------------------------------------------------------------------------
+  // Redux
+  // ---------------------------------------------------------------------------
+
+  const folders = useSelector((state: RootState) => state.notes.folders)
+  const reduxDoc = useSelector((state: RootState) => state.notes.docs[folderId])
+
+  const folder = folders.find((item) => String(item.id) === folderId)
+
+  // ---------------------------------------------------------------------------
+  // Folder label
+  // ---------------------------------------------------------------------------
+
+  const folderName = getFolderName(folder)
+
+  const label = useMemo(() => {
+    if (folderName) return folderName
+    return looksLikeGeneratedId(folderId) ? 'Documentation' : humanize(folderId)
+  }, [folderName, folderId])
+
+  const languageKey = getLanguageKey(label)
+
+  // ---------------------------------------------------------------------------
+  // Fallback document
+  // ---------------------------------------------------------------------------
+
+  const fallbackDoc = useMemo<Doc>(
+    () => ({
+      id: folderId,
+      title: `${label} Documentation`,
+      description:
+        'Your documentation workspace is ready. Add topics and content to get started.',
+      topics: [],
+    }),
+    [folderId, label],
+  )
+
+  const doc = reduxDoc ?? fallbackDoc
+
+  const meta = useMemo(
+    () => ({ label, color: folder?.tint ?? 'indigo', emoji: '·' }),
+    [label, folder?.tint],
+  )
+
+  // ---------------------------------------------------------------------------
+  // Local UI state
+  // ---------------------------------------------------------------------------
+
+  const [topicId, setTopicId] = useState(doc.topics[0]?.id ?? '')
+  const [subtopicId, setSubtopicId] = useState(doc.topics[0]?.subtopics[0]?.id ?? '')
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(
+    Object.fromEntries(doc.topics.map((topic) => [topic.id, true])),
+  )
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [modal, setModal] = useState<'topic' | 'subtopic' | 'content' | null>(null)
+  const [deleteModal, setDeleteModal] = useState<DeleteModalState | null>(null)
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [contentType, setContentType] = useState<'text' | 'code'>('text')
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTocId, setActiveTocId] = useState<string | null>(null)
+
+  // ---------------------------------------------------------------------------
+  // Keep selection valid when Redux document changes
+  // (depends only on `doc` on purpose, to avoid repeated updates)
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    const firstTopic = doc.topics[0]
+    const selectedTopic = doc.topics.find((topic) => topic.id === topicId) ?? firstTopic
+    const selectedSubtopic =
+      selectedTopic?.subtopics.find((subtopic) => subtopic.id === subtopicId) ??
+      selectedTopic?.subtopics[0]
+
+    const nextTopicId = selectedTopic?.id ?? ''
+    const nextSubtopicId = selectedSubtopic?.id ?? ''
+
+    if (topicId !== nextTopicId) setTopicId(nextTopicId)
+    if (subtopicId !== nextSubtopicId) setSubtopicId(nextSubtopicId)
+
+    setExpanded((previous) => {
+      let changed = false
+      const next = { ...previous }
+      doc.topics.forEach((topic) => {
+        if (typeof next[topic.id] === 'undefined') {
+          next[topic.id] = true
+          changed = true
+        }
+      })
+      return changed ? next : previous
+    })
+  }, [doc])
+
+  // ---------------------------------------------------------------------------
+  // Keyboard shortcuts
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setSearchOpen((previous) => !previous)
+      }
+      if (event.key === 'Escape') {
+        setSearchOpen(false)
+        setModal(null)
+        setDeleteModal(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // ---------------------------------------------------------------------------
+  // Current topic / subtopic
+  // ---------------------------------------------------------------------------
+
+  const topic = doc.topics.find((item) => item.id === topicId) ?? doc.topics[0]
+  const subtopic =
+    topic?.subtopics.find((item) => item.id === subtopicId) ?? topic?.subtopics[0]
+  const toc = subtopic?.content ?? []
+
+  // ---------------------------------------------------------------------------
+  // Reset active TOC + scroll when subtopic changes
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    setActiveTocId(toc[0]?.id ?? null)
+    requestAnimationFrame(() => {
+      mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+    })
+  }, [subtopic?.id])
+
+  // ---------------------------------------------------------------------------
+  // Scroll-based active TOC tracking
+  // ---------------------------------------------------------------------------
+
+  const handleMainScroll = () => {
+    const container = mainScrollRef.current
+    if (!container || !toc.length) return
+
+    const containerRect = container.getBoundingClientRect()
+    const activationOffset = 100
+    let currentId = toc[0]?.id ?? null
+
+    for (const item of toc) {
+      const element = document.getElementById(`content-${item.id}`)
+      if (!element) continue
+
+      const relativeTop = element.getBoundingClientRect().top - containerRect.top
+      if (relativeTop <= activationOffset) {
+        currentId = item.id
+      }
+    }
+
+    setActiveTocId((previous) => (previous === currentId ? previous : currentId))
+  }
+
+  // ---------------------------------------------------------------------------
+  // Previous / next
+  // ---------------------------------------------------------------------------
+
+  const allSubtopics = useMemo(() => {
+    const list: { topic: Topic; subtopic: Subtopic }[] = []
+    doc.topics.forEach((currentTopic) => {
+      currentTopic.subtopics.forEach((currentSubtopic) => {
+        list.push({ topic: currentTopic, subtopic: currentSubtopic })
+      })
+    })
+    return list
+  }, [doc])
+
+  const currentIndex = allSubtopics.findIndex(
+    (item) => item.topic.id === topic?.id && item.subtopic.id === subtopic?.id,
+  )
+
+  const prevSubtopic = currentIndex > 0 ? allSubtopics[currentIndex - 1] : null
+  const nextSubtopic =
+    currentIndex >= 0 && currentIndex < allSubtopics.length - 1
+      ? allSubtopics[currentIndex + 1]
+      : null
+
+  // ---------------------------------------------------------------------------
+  // Selection
+  // ---------------------------------------------------------------------------
+
+  const select = (nextTopic: Topic, nextSubtopic?: Subtopic) => {
+    const targetSubtopic = nextSubtopic ?? nextTopic.subtopics[0]
+
+    setTopicId(nextTopic.id)
+    setSubtopicId(targetSubtopic?.id ?? '')
+    setExpanded((previous) => ({ ...previous, [nextTopic.id]: true }))
+    setMobileOpen(false)
+    setActiveTocId(targetSubtopic?.content?.[0]?.id ?? null)
+
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `#${targetSubtopic?.id ?? nextTopic.id}`)
+    }
+
+    requestAnimationFrame(() => {
+      mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Scroll to content section
+  // ---------------------------------------------------------------------------
+
+  const scrollTo = (id: string) => {
+    const container = mainScrollRef.current
+    const element = document.getElementById(`content-${id}`)
+    if (!container || !element) return
+
+    setActiveTocId(id)
+
+    const containerRect = container.getBoundingClientRect()
+    const elementRect = element.getBoundingClientRect()
+    const headerOffset = 24
+    const targetTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset
+
+    container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
+    window.history.replaceState(null, '', `#content-${id}`)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Copy
+  // ---------------------------------------------------------------------------
+
+  const handleCopy = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedId(id)
+      window.setTimeout(() => setCopiedId(null), 2000)
+    } catch {
+      // Clipboard unavailable.
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Modal
+  // ---------------------------------------------------------------------------
+
+  const resetModal = () => {
+    setModal(null)
+    setTitle('')
+    setContent('')
+    setContentType('text')
+  }
+
+  // ---------------------------------------------------------------------------
+  // Add topic / subtopic / content
+  // ---------------------------------------------------------------------------
+
+  const add = (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+
+    const cleanTitle = title.trim()
+    const cleanContent = content.trim()
+
+    if (!modal || !cleanTitle || (modal === 'content' && !cleanContent)) return
+
+    if (modal === 'topic') {
+      const newTopic: Topic = { id: createId(), title: cleanTitle, subtopics: [] }
+      const nextDoc: Doc = { ...doc, topics: [...doc.topics, newTopic] }
+
+      dispatch(setDoc({ folderId, doc: nextDoc }))
+
+      setTopicId(newTopic.id)
+      setSubtopicId('')
+      setExpanded((previous) => ({ ...previous, [newTopic.id]: true }))
+
+      resetModal()
+      return
+    }
+
+    if (modal === 'subtopic' && topic) {
+      dispatch(
+        addSubtopic({
+          folderId,
+          topicId: topic.id,
+          title: cleanTitle,
+          description: 'Recently added section. Click Add Content to populate.',
+        }),
+      )
+
+      setExpanded((previous) => ({ ...previous, [topic.id]: true }))
+
+      resetModal()
+      return
+    }
+
+    if (modal === 'content' && topic && subtopic) {
+      const newContent: Omit<Content, 'id'> = {
+        title: cleanTitle,
+        type: contentType,
+        content: cleanContent,
+        ...(contentType === 'code' ? { language: languageKey } : {}),
+      }
+
+      dispatch(
+        addContent({
+          folderId,
+          topicId: topic.id,
+          subtopicId: subtopic.id,
+          content: newContent,
+        }),
+      )
+
+      resetModal()
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete requests
+  // ---------------------------------------------------------------------------
+
+  const deleteTopic = (id: string, event?: React.MouseEvent) => {
+    event?.stopPropagation()
+    const target = doc.topics.find((item) => item.id === id)
+    if (!target) return
+    setDeleteModal({ type: 'topic', id, title: target.title })
+  }
+
+  const deleteSubtopic = (parentTopic: Topic, id: string, event?: React.MouseEvent) => {
+    event?.stopPropagation()
+    const target = parentTopic.subtopics.find((item) => item.id === id)
+    if (!target) return
+    setDeleteModal({
+      type: 'subtopic',
+      id,
+      title: target.title,
+      parentTopicId: parentTopic.id,
+    })
+  }
+
+  const deleteContent = (contentId: string) => {
+    if (!topic || !subtopic) return
+    const target = subtopic.content.find((item) => item.id === contentId)
+    if (!target) return
+    setDeleteModal({
+      type: 'content',
+      id: contentId,
+      title: target.title,
+      parentTopicId: topic.id,
+    })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Confirm deletion
+  // ---------------------------------------------------------------------------
+
+  const confirmDelete = () => {
+    if (!deleteModal) return
+
+    if (deleteModal.type === 'topic') {
+      const remainingTopics = doc.topics.filter((item) => item.id !== deleteModal.id)
+      const nextDoc: Doc = { ...doc, topics: remainingTopics }
+
+      dispatch(setDoc({ folderId, doc: nextDoc }))
+
+      if (deleteModal.id === topicId) {
+        const nextTopic = remainingTopics[0]
+
+        if (nextTopic) {
+          setTopicId(nextTopic.id)
+          setSubtopicId(nextTopic.subtopics[0]?.id ?? '')
+          setExpanded((previous) => ({ ...previous, [nextTopic.id]: true }))
+          setActiveTocId(nextTopic.subtopics[0]?.content?.[0]?.id ?? null)
+
+          requestAnimationFrame(() => {
+            mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+          })
+        } else {
+          setTopicId('')
+          setSubtopicId('')
+          setActiveTocId(null)
+        }
+      }
+    }
+
+    if (deleteModal.type === 'subtopic') {
+      const parentTopic = doc.topics.find((item) => item.id === deleteModal.parentTopicId)
+
+      if (parentTopic) {
+        const remainingSubtopics = parentTopic.subtopics.filter(
+          (item) => item.id !== deleteModal.id,
+        )
+
+        const nextDoc: Doc = {
+          ...doc,
+          topics: doc.topics.map((item) =>
+            item.id === parentTopic.id ? { ...item, subtopics: remainingSubtopics } : item,
+          ),
+        }
+
+        dispatch(setDoc({ folderId, doc: nextDoc }))
+
+        if (deleteModal.id === subtopicId) {
+          const nextSubtopic = remainingSubtopics[0]
+
+          setTopicId(parentTopic.id)
+          setSubtopicId(nextSubtopic?.id ?? '')
+          setActiveTocId(nextSubtopic?.content?.[0]?.id ?? null)
+
+          requestAnimationFrame(() => {
+            mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+          })
+        }
+      }
+    }
+
+    if (deleteModal.type === 'content') {
+      if (topic && subtopic) {
+        const nextDoc: Doc = {
+          ...doc,
+          topics: doc.topics.map((currentTopic) =>
+            currentTopic.id !== topic.id
+              ? currentTopic
+              : {
+                  ...currentTopic,
+                  subtopics: currentTopic.subtopics.map((currentSubtopic) =>
+                    currentSubtopic.id !== subtopic.id
+                      ? currentSubtopic
+                      : {
+                          ...currentSubtopic,
+                          content: currentSubtopic.content.filter(
+                            (item) => item.id !== deleteModal.id,
+                          ),
+                        },
+                  ),
+                },
+          ),
+        }
+
+        dispatch(setDoc({ folderId, doc: nextDoc }))
+
+        if (activeTocId === deleteModal.id) {
+          setActiveTocId(
+            subtopic.content.find((item) => item.id !== deleteModal.id)?.id ?? null,
+          )
+        }
+      }
+    }
+
+    setDeleteModal(null)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reset document
+  // ---------------------------------------------------------------------------
+
+  const resetToDefault = () => {
+    const confirmed = window.confirm(
+      `Reset ${meta.label} documentation to default content? This cannot be undone.`,
+    )
+    if (!confirmed) return
+
+    dispatch(setDoc({ folderId, doc: fallbackDoc }))
+
+    setTopicId(fallbackDoc.topics[0]?.id ?? '')
+    setSubtopicId(fallbackDoc.topics[0]?.subtopics[0]?.id ?? '')
+    setExpanded(Object.fromEntries(fallbackDoc.topics.map((item) => [item.id, true])))
+    setActiveTocId(fallbackDoc.topics[0]?.subtopics[0]?.content?.[0]?.id ?? null)
+
+    requestAnimationFrame(() => {
+      mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+    })
+  }
+  void resetToDefault
+
+  // ---------------------------------------------------------------------------
+  // Search
+  // ---------------------------------------------------------------------------
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return []
+
+    const query = searchQuery.toLowerCase()
+    const results: { topic: Topic; subtopic: Subtopic; contentItem?: Content }[] = []
+
+    doc.topics.forEach((currentTopic) => {
+      currentTopic.subtopics.forEach((currentSubtopic) => {
+        if (
+          currentSubtopic.title.toLowerCase().includes(query) ||
+          currentSubtopic.description?.toLowerCase().includes(query)
+        ) {
+          results.push({ topic: currentTopic, subtopic: currentSubtopic })
+        }
+
+        currentSubtopic.content.forEach((contentItem) => {
+          if (
+            contentItem.title.toLowerCase().includes(query) ||
+            contentItem.content.toLowerCase().includes(query)
+          ) {
+            results.push({ topic: currentTopic, subtopic: currentSubtopic, contentItem })
+          }
+        })
+      })
+    })
+
+    return results
+  }, [searchQuery, doc])
+
+  // ---------------------------------------------------------------------------
+  // Code placeholder (based on the folder NAME)
+  // ---------------------------------------------------------------------------
+
+  const codePlaceholder =
+    languageKey === 'python'
+      ? `def my_function():\n    print("Hello from Python!")`
+      : languageKey === 'javascript' || languageKey === 'typescript'
+        ? `function myFunction() {\n  console.log("Hello!");\n}`
+        : languageKey === 'tsx'
+          ? `function MyComponent() {\n  return <div>Hello!</div>;\n}`
+          : `public void myMethod() {\n    System.out.println("Hello!");\n}`
+
+  // ---------------------------------------------------------------------------
+  // Sidebar
+  // ---------------------------------------------------------------------------
+
+  const sidebar = (
+    <aside
+      id="handbook-navigation"
+      aria-label="Documentation navigation"
+      className={`min-h-0 shrink-0 flex-col border-r ${PAPER} ${LINE} ${
+        mobileOpen
+          ? 'fixed inset-y-0 left-0 z-40 flex w-[min(300px,85vw)] shadow-[12px_0_40px_rgba(0,0,0,0.15)] md:static md:z-auto md:w-56 md:shadow-none min-[1100px]:w-[260px]'
+          : 'hidden md:flex md:w-56 min-[1100px]:w-[260px]'
+      }`}
+    >
+      <DocsSidebarHeader
+        title={meta.label}
+        editable
+        onSearch={() => setSearchOpen(true)}
+        onClose={() => setMobileOpen(false)}
+      />
+
+      {/* Topics header */}
+      <div className={`flex shrink-0 items-center justify-between gap-2 px-[22px] pb-2.5 text-[11px] font-medium ${MUTED}`}>
+        <span>Topics & Sections</span>
+
+        <button
+          type="button"
+          onClick={() => setModal('topic')}
+          className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${ACCENT} ${HOVER_ACTIVE} ${FOCUS}`}
+          aria-label="Add topic"
+        >
+          <Plus className="size-3.5" />
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 pb-5 pt-2">
+        {doc.topics.map((item) => {
+          const isExpanded = Boolean(expanded[item.id])
+          const isCurrentTopic = topic?.id === item.id
+          const hasSubtopics = item.subtopics.length > 0
+
+          return (
+            <div key={item.id} className="group">
+              {/* Topic */}
+              <div
+                className={`relative flex items-center rounded-md transition-all duration-200 ${
+                  isCurrentTopic ? 'bg-[#28262e]/[0.045] dark:bg-white/[0.06]' : HOVER_SOFT
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExpanded((previous) => ({
+                      ...previous,
+                      [item.id]: !previous[item.id],
+                    }))
+
+                    if (item.subtopics[0]) {
+                      select(item, item.subtopics[0])
+                    } else {
+                      setTopicId(item.id)
+                      setSubtopicId('')
+                    }
+                  }}
+                  className={`flex min-w-0 flex-1 items-center gap-[9px] rounded-md px-2.5 py-[9px] text-left ${FOCUS}`}
+                >
+                  <FileText size={14} aria-hidden="true" className={`shrink-0 ${MUTED}`} />
+
+                  <span
+                    className={`min-w-0 flex-1 truncate text-[12px] ${INK} ${
+                      isCurrentTopic ? 'font-semibold' : 'font-medium opacity-80'
+                    }`}
+                  >
+                    {item.title}
+                  </span>
+                </button>
+
+                {/* Actions */}
+                <div className="flex shrink-0 items-center">
+                  <div
+                    className={`flex items-center gap-0.5 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 ${REVEAL}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setModal('subtopic')
+                        setTopicId(item.id)
+                        setSubtopicId(item.subtopics[0]?.id ?? '')
+                      }}
+                      className={`flex size-7 items-center justify-center rounded transition-colors hover:text-[#6950a8] dark:hover:text-[#c1a5ef] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                      title="Add subtopic"
+                      aria-label={`Add subtopic to ${item.title}`}
+                    >
+                      <Plus className="size-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(event) => deleteTopic(item.id, event)}
+                      className={`flex size-7 items-center justify-center rounded transition-colors hover:bg-red-500/10 ${FOCUS}`}
+                      title={`Delete topic ${item.title}`}
+                      aria-label={`Delete topic ${item.title}`}
+                    >
+                      <Trash2 className={`size-3.5 ${DANGER}`} />
+                    </button>
+                  </div>
+
+                  {hasSubtopics && (
+                    <button
+                      type="button"
+                      aria-label={isExpanded ? `Collapse ${item.title}` : `Expand ${item.title}`}
+                      aria-expanded={isExpanded}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setExpanded((previous) => ({
+                          ...previous,
+                          [item.id]: !previous[item.id],
+                        }))
+                      }}
+                      className={`mr-2 flex size-7 shrink-0 items-center justify-center rounded transition-all duration-200 ${HOVER_ACTIVE} ${FOCUS} ${
+                        isExpanded ? `${ACTIVE} ${INK}` : MUTED
+                      }`}
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="size-4" />
+                      ) : (
+                        <ChevronRight className="size-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Subtopics */}
+              {isExpanded && hasSubtopics && (
+                <div className={`relative mb-1 ml-6 mt-1 border-l border-dotted ${LINE}`}>
+                  <div className="space-y-0.5">
+                    {item.subtopics.map((child) => {
+                      const isSelected = subtopic?.id === child.id
+
+                      return (
+                        <div
+                          key={child.id}
+                          className="group/subtopic relative flex min-w-0 items-center"
+                        >
+                          <div
+                            data-active={isSelected || undefined}
+                            className={`relative flex min-w-0 flex-1 items-center rounded-[5px] transition-all duration-150 ${
+                              isSelected
+                                ? `${ACTIVE} ${ACCENT}`
+                                : `${MUTED} ${HOVER_SOFT} hover:text-[#28262e] dark:hover:text-[#eeeaf4]`
+                            }`}
+                          >
+                            {isSelected && (
+                              <span className="absolute -left-px top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#6950a8] dark:bg-[#c1a5ef]" />
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => select(item, child)}
+                              aria-current={isSelected ? 'page' : undefined}
+                              className={`flex min-w-0 flex-1 items-center gap-2.5 rounded-[5px] px-2.5 py-2 text-left ${FOCUS}`}
+                            >
+                              <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium">
+                                {child.title}
+                              </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(event) => deleteSubtopic(item, child.id, event)}
+                              className={`mr-1 flex size-6 shrink-0 items-center justify-center rounded transition-all hover:bg-red-500/10 focus-visible:opacity-100 group-hover/subtopic:opacity-100 ${REVEAL} ${FOCUS}`}
+                              title={`Delete subtopic ${child.title}`}
+                              aria-label={`Delete subtopic ${child.title}`}
+                            >
+                              <Trash2 className={`size-3 ${DANGER}`} />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {doc.topics.length === 0 && (
+          <p className={`px-2.5 py-4 text-xs ${MUTED}`}>
+            No topics have been created for {meta.label} yet.
+          </p>
+        )}
+      </nav>
+
+      <DocsSidebarFooter folderId={folderId} editable />
+    </aside>
+  )
+
+  // ---------------------------------------------------------------------------
+  // Main render
+  // ---------------------------------------------------------------------------
+
+  return (
+    <div
+      className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden border font-sans max-md:border-0 md:rounded-[10px] ${PAPER} ${LINE} ${INK} shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-[#f0ecf8] dark:selection:bg-[#30283f]`}
+    >
+      <DocsMobileHeader
+        title={meta.label}
+        editable
+        open={mobileOpen}
+        onOpen={() => setMobileOpen(true)}
+        onSearch={() => setSearchOpen(true)}
+      />
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {sidebar}
+
+        {/* MAIN DOCUMENT SCROLL CONTAINER */}
+        <main
+          ref={mainScrollRef}
+          onScroll={handleMainScroll}
+          className={`min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain ${PAPER}`}
+        >
+          <div className="mx-auto w-full max-w-[800px] px-6 pb-12 pt-6 md:px-12 md:pb-16 md:pt-8 min-[1100px]:px-16 min-[1100px]:pt-9">
+            {/* Breadcrumbs */}
+            <div className={`mb-6 flex flex-wrap items-center gap-2 text-[11px] font-medium md:mb-7 ${MUTED}`}>
+              <Link
+                to="/notes"
+                className={`transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${FOCUS}`}
+              >
+                <Home className="size-3.5" />
+              </Link>
+
+              <ChevronRight className="size-3.5 opacity-60" />
+
+              <span>{meta.label}</span>
+
+              <ChevronRight className="size-3.5 opacity-60" />
+
+              <button
+                type="button"
+                className={`transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${FOCUS}`}
+                onClick={() => {
+                  if (topic) select(topic, topic.subtopics[0])
+                }}
+              >
+                {topic?.title ?? 'General'}
+              </button>
+
+              <ChevronRight className="size-3.5 opacity-60" />
+
+              <span className={`px-2 py-0.5 font-semibold ${INK}`}>
+                {subtopic?.title ?? 'Overview'}
+              </span>
+            </div>
+
+            {/* Page header */}
+            <div className="mb-8">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <h1
+                  className={`text-[clamp(26px,2.5vw,34px)] font-semibold leading-tight tracking-[-0.04em] [overflow-wrap:anywhere] ${INK}`}
+                >
+                  {subtopic?.title ?? 'Select a subtopic'}
+                </h1>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModal('content')}
+                    disabled={!subtopic}
+                    title="Add content"
+                    className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors hover:border-[#6950a8] disabled:cursor-not-allowed disabled:opacity-45 dark:hover:border-[#c1a5ef] ${ACTIVE} ${ACCENT} ${LINE} ${FOCUS}`}
+                  >
+                    <Plus className="size-3.5" /> Add content
+                  </button>
+                </div>
+              </div>
+
+              {subtopic?.description && (
+                <div className={`mt-3 text-[13px] leading-[1.8] ${MUTED}`}>
+                  {subtopic.description}
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            {subtopic?.content && subtopic.content.length > 0 ? (
+              <div className="flex flex-col gap-8">
+                {subtopic.content.map((item) => (
+                  <section
+                    id={`content-${item.id}`}
+                    key={item.id}
+                    className="group relative scroll-mt-6"
+                  >
+                    <div className="mb-4 flex items-center justify-between pb-1">
+                      <h2
+                        className={`text-[18px] font-semibold leading-normal tracking-[-0.025em] [overflow-wrap:anywhere] ${INK}`}
+                      >
+                        {item.title}
+                      </h2>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteContent(item.id)}
+                        className={`rounded-lg p-1.5 transition-all hover:bg-red-500/10 focus-visible:opacity-100 group-hover:opacity-100 ${REVEAL} ${FOCUS}`}
+                        title="Delete this block"
+                        aria-label={`Delete content block ${item.title}`}
+                      >
+                        <Trash2 className={`size-4 ${DANGER}`} />
+                      </button>
+                    </div>
+
+                    {item.type === 'code' ? (
+                      <DocsCodeBlock
+                        label={`${item.title.toLowerCase().replace(/\s+/g, '-')}.${item.language && !looksLikeGeneratedId(item.language) ? item.language : languageKey}`}
+                        content={item.content}
+                        copied={copiedId === item.id}
+                        onCopy={() => void handleCopy(item.content, item.id)}
+                      />
+                    ) : (
+                      <div className={`max-w-none text-[14px] leading-[1.9] [overflow-wrap:anywhere] ${MUTED}`}>
+                        <p className="whitespace-pre-wrap">{item.content}</p>
+                      </div>
+                    )}
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 text-center">
+                <div className={`mb-4 flex size-14 items-center justify-center rounded-lg ${ACTIVE} ${ACCENT}`}>
+                  <FileText className="size-7" />
+                </div>
+
+                <h3 className={`text-lg font-bold ${INK}`}>No content in this section yet</h3>
+
+                <p className={`mt-1 max-w-sm text-sm ${MUTED}`}>
+                  Start documenting by adding a text explanation or code snippet block.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => setModal('content')}
+                  disabled={!subtopic}
+                  className={`mt-5 inline-flex cursor-pointer items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold ${PRIMARY_BTN} ${FOCUS}`}
+                >
+                  <Plus className="size-4" />
+                  <span>Create Content Block</span>
+                </button>
+              </div>
+            )}
+
+            {/* Prev / Next */}
+            {allSubtopics.length > 0 && (
+              <div className={`mt-10 grid grid-cols-1 gap-4 border-t pt-6 sm:grid-cols-2 ${LINE}`}>
+                {prevSubtopic ? (
+                  <button
+                    type="button"
+                    onClick={() => select(prevSubtopic.topic, prevSubtopic.subtopic)}
+                    className={`group flex min-w-0 flex-col items-start rounded-lg border p-4 text-left transition-all hover:border-[#6950a8] dark:hover:border-[#c1a5ef] ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
+                  >
+                    <div
+                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-[#6950a8] dark:group-hover:text-[#c1a5ef] ${MUTED}`}
+                    >
+                      <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-1" />
+                      <span>Previous</span>
+                    </div>
+
+                    <div className={`mt-1 w-full truncate text-sm ${MUTED}`}>
+                      {prevSubtopic.subtopic.title}
+                    </div>
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                {nextSubtopic ? (
+                  <button
+                    type="button"
+                    onClick={() => select(nextSubtopic.topic, nextSubtopic.subtopic)}
+                    className={`group flex min-w-0 flex-col items-end rounded-lg border p-4 text-right transition-all hover:border-[#6950a8] dark:hover:border-[#c1a5ef] ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
+                  >
+                    <div
+                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-[#6950a8] dark:group-hover:text-[#c1a5ef] ${MUTED}`}
+                    >
+                      <span>Next</span>
+                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                    </div>
+
+                    <div className={`mt-1 w-full truncate text-right text-sm ${MUTED}`}>
+                      {nextSubtopic.subtopic.title}
+                    </div>
+                  </button>
+                ) : (
+                  <div />
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* RIGHT TOC */}
+        <aside
+          aria-label="On this page"
+          className="hidden w-[200px] shrink-0 overflow-y-auto py-9 pl-0 pr-6 min-[1100px]:block"
+        >
+          <div>
+            <h2 className={`mb-[18px] flex items-center gap-[7px] text-[11px] font-normal ${MUTED}`}>
+              <FileText size={13} /> On this page
+            </h2>
+
+            {toc.length > 0 ? (
+              <nav className={`w-full border-l ${LINE}`}>
+                {toc.map((item) => {
+                  const isActive = activeTocId === item.id
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => scrollTo(item.id)}
+                      aria-current={isActive ? 'location' : undefined}
+                      className={`relative flex w-full min-w-0 items-center bg-transparent px-3 py-2 text-left text-[11px] leading-relaxed transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${FOCUS} ${
+                        isActive ? `font-medium ${INK}` : MUTED
+                      }`}
+                    >
+                      {isActive && (
+                        <span className="absolute -left-px top-0 h-full w-px bg-[#6950a8] dark:bg-[#c1a5ef]" />
+                      )}
+                      <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{item.title}</span>
+                    </button>
+                  )
+                })}
+              </nav>
+            ) : (
+              <div className="px-2.5 py-3">
+                <p className={`text-xs ${MUTED}`}>No sections in this subtopic.</p>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {/* MOBILE BACKDROP */}
+      {mobileOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-[#171020]/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close navigation overlay"
+        />
+      )}
+
+      {/* SEARCH MODAL */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            className={`w-full max-w-xl overflow-hidden rounded-[10px] border shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
+          >
+            <div className={`flex items-center border-b px-4 py-3 ${SOFT} ${LINE}`}>
+              <Search className={`mr-3 size-5 ${MUTED}`} />
+
+              <input
+                autoFocus
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={`Search ${meta.label} docs...`}
+                className={`flex-1 bg-transparent text-sm outline-none placeholder:text-[#716d79] dark:placeholder:text-[#aaa4b5] ${INK}`}
+              />
+
+              <button
+                type="button"
+                onClick={() => setSearchOpen(false)}
+                aria-label="Close search"
+                className={`rounded-md p-1 transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="max-h-80 overflow-y-auto p-3">
+              {searchResults.length > 0 ? (
+                <div className="space-y-1">
+                  {searchResults.map((result, index) => (
+                    <button
+                      key={`${result.topic.id}-${result.subtopic.id}-${result.contentItem?.id ?? index}`}
+                      type="button"
+                      onClick={() => {
+                        select(result.topic, result.subtopic)
+
+                        if (result.contentItem) {
+                          window.setTimeout(() => scrollTo(result.contentItem!.id), 150)
+                        }
+
+                        setSearchOpen(false)
+                        setSearchQuery('')
+                      }}
+                      className={`group flex w-full items-center justify-between rounded-md p-3 text-left transition-colors ${HOVER_ACTIVE} ${FOCUS}`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-semibold ${ACCENT}`}>
+                            {result.topic.title}
+                          </span>
+                          <span className={MUTED}>/</span>
+                          <span className={`text-xs font-medium ${INK}`}>
+                            {result.subtopic.title}
+                          </span>
+                        </div>
+
+                        {result.contentItem && (
+                          <div className={`mt-1 truncate text-xs ${MUTED}`}>
+                            <span className={`font-semibold ${INK} opacity-80`}>
+                              {result.contentItem.title}:
+                            </span>{' '}
+                            {result.contentItem.content.slice(0, 80)}
+                            ...
+                          </div>
+                        )}
+                      </div>
+
+                      <ChevronRight
+                        className={`ml-2 size-4 shrink-0 transition-colors group-hover:text-[#6950a8] dark:group-hover:text-[#c1a5ef] ${MUTED}`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : searchQuery.trim() ? (
+                <div className={`py-8 text-center text-sm ${MUTED}`}>
+                  No results for &ldquo;{searchQuery}&rdquo; in {meta.label} docs.
+                </div>
+              ) : (
+                <div className={`py-6 text-center text-xs ${MUTED}`}>
+                  Type to search through {meta.label} documentation.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE MODAL */}
+      {deleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDeleteModal(null)
+          }}
+        >
+          <div
+            className={`w-full max-w-lg rounded-[10px] border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
+          >
+            <div className={`flex items-center justify-between border-b pb-4 ${LINE}`}>
+              <h2 className={`text-lg font-bold capitalize ${INK}`}>Delete {deleteModal.type}</h2>
+
+              <button
+                type="button"
+                onClick={() => setDeleteModal(null)}
+                className={`rounded-lg p-1.5 transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                aria-label="Close delete confirmation"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="py-5">
+              <p className={`text-sm leading-relaxed ${INK}`}>
+                Are you sure you want to delete{' '}
+                <span className="font-semibold">&ldquo;{deleteModal.title}&rdquo;</span>?
+              </p>
+
+              {deleteModal.type === 'topic' && (
+                <p className={`mt-2 text-xs leading-relaxed ${MUTED}`}>
+                  This will also delete all subtopics and content inside this topic.
+                </p>
+              )}
+
+              {deleteModal.type === 'subtopic' && (
+                <p className={`mt-2 text-xs leading-relaxed ${MUTED}`}>
+                  This will also delete all content blocks inside this subtopic.
+                </p>
+              )}
+            </div>
+
+            <div className={`flex justify-end gap-2.5 border-t pt-4 ${LINE}`}>
+              <button
+                type="button"
+                onClick={() => setDeleteModal(null)}
+                className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className={`inline-flex items-center gap-2 rounded-md bg-red-600 px-5 py-2 text-xs font-semibold text-white shadow-md transition-colors hover:bg-red-500 ${FOCUS}`}
+              >
+                <Trash2 className="size-3.5" />
+                Delete {deleteModal.type}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE MODAL */}
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            className={`w-full max-w-lg rounded-[10px] border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
+          >
+            <div className={`flex items-center justify-between border-b pb-4 ${LINE}`}>
+              <h2 className={`text-lg font-bold capitalize ${INK}`}>Create New {modal}</h2>
+
+              <button
+                type="button"
+                onClick={resetModal}
+                aria-label="Close"
+                className={`rounded-lg p-1.5 transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form className="mt-5 flex flex-col gap-4" onSubmit={add}>
+              <label className={`flex flex-col gap-1.5 text-xs font-semibold ${INK}`}>
+                Title
+                <input
+                  autoFocus
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  className={`rounded-md ${FIELD} ${LINE} ${INK}`}
+                  placeholder={
+                    modal === 'topic'
+                      ? `e.g., ${meta.label} Advanced Concepts`
+                      : modal === 'subtopic'
+                        ? 'e.g., Error Handling'
+                        : 'e.g., Example Code'
+                  }
+                />
+              </label>
+
+              {modal === 'content' && (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <span className={`text-xs font-semibold ${INK}`}>Block Type</span>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {(
+                        [
+                          { value: 'text', label: 'Text / Paragraph', Icon: AlignLeft },
+                          { value: 'code', label: 'Code Snippet', Icon: Terminal },
+                        ] as const
+                      ).map(({ value, label: optionLabel, Icon }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setContentType(value)}
+                          aria-pressed={contentType === value}
+                          className={`flex items-center justify-center gap-2 rounded-md border p-2.5 text-xs font-semibold transition-all ${FOCUS} ${
+                            contentType === value
+                              ? `border-[#6950a8] ring-2 ring-[#6950a8]/20 dark:border-[#c1a5ef] dark:ring-[#c1a5ef]/20 ${ACTIVE} ${ACCENT}`
+                              : `${LINE} ${SOFT} ${MUTED} ${HOVER_ACTIVE}`
+                          }`}
+                        >
+                          <Icon className="size-4" />
+                          <span>{optionLabel}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <label className={`flex flex-col gap-1.5 text-xs font-semibold ${INK}`}>
+                    {contentType === 'code' ? `Code Body (${meta.label})` : 'Content Paragraph'}
+
+                    <textarea
+                      value={content}
+                      onChange={(event) => setContent(event.target.value)}
+                      rows={6}
+                      className={`resize-y rounded-md p-3 font-mono ${FIELD} ${LINE} ${INK}`}
+                      placeholder={
+                        contentType === 'code'
+                          ? codePlaceholder
+                          : 'Write your documentation explanation here...'
+                      }
+                    />
+                  </label>
+                </>
+              )}
+
+              <div className={`mt-2 flex justify-end gap-2.5 border-t pt-4 ${LINE}`}>
+                <button
+                  type="button"
+                  onClick={resetModal}
+                  className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={!title.trim() || (modal === 'content' && !content.trim())}
+                  className={`cursor-pointer rounded-md px-5 py-2 text-xs font-semibold ${PRIMARY_BTN} ${FOCUS}`}
+                >
+                  Create {modal}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
