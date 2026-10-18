@@ -6,7 +6,7 @@ import { useRef } from "react"
 import {
   Play,
   CheckCircle2,
-  PauseCircle,
+  PauseCircle,Folder,Pause
 } from "lucide-react"
 
 import { TimerRobot } from "./timer-robot"
@@ -19,6 +19,9 @@ import {
   taskSpentSeconds,
   isTaskStartAllowed,
 } from "../../store/slices/taskSlice"
+
+const ROUND_BUTTON_CLASS =
+  "grid size-9 cursor-pointer place-items-center rounded-full border border-soft text-[#a3a3a3] transition-colors hover:enabled:bg-[#202020] hover:enabled:text-[#f7f7f5] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f7f7f5] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none"
 
 interface TimerPanelProps {
   workspaceId?: string | null
@@ -120,26 +123,43 @@ export function TimerPanel({
       {/* TIMER CARD */}
       <div className="flex shrink-0 flex-col gap-4 p-4">
         {/* Task / workspace */}
-        <div className="flex h-10 min-w-0 flex-col items-center justify-center gap-1 text-center">
-          <span
-            className="w-full truncate text-[9px] font-medium uppercase tracking-widest text-muted-foreground"
-            title={activeWorkspace?.name}
-          >
-            {active
-              ? activeWorkspace?.name ?? "Workspace"
-              : "Ready when you are"}
-          </span>
 
-          <p
-            className="w-full truncate text-xs font-medium text-foreground"
-            title={active?.title}
-          >
-            {active?.title ?? "No active task"}
-          </p>
-        </div>
+
+<div className="flex h-10 min-w-0 items-center justify-center gap-2 text-center">
+  {active && (
+    <>
+      <span className="flex min-w-0 max-w-[40%] items-center gap-1">
+        <Folder className="h-3 w-3 shrink-0 text-muted-foreground" />
+        <span
+          className="truncate text-[9px] font-medium !font-inter uppercase tracking-widest text-muted-foreground"
+          title={activeWorkspace?.name}
+        >
+          {activeWorkspace?.name ?? "Workspace"}
+        </span>
+      </span>
+
+      <span
+        aria-hidden="true"
+        className="h-3 w-px shrink-0 bg-border"
+      />
+    </>
+  )}
+
+  <span className="flex min-w-0 items-center gap-1">
+    {active && (
+  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+)}
+    <p
+      className="truncate text-xs font-medium text-foreground !font-inter"
+      title={active?.title}
+    >
+      {active?.title ?? "No active task"}
+    </p>
+  </span>
+</div>
 
         {/* Timer face */}
-        <div className="face">
+        <div className="flex w-full shrink-0 flex-col items-center gap-4 px-4 pt-5 pb-4 text-primary">
           <TimerDial
             progress={pct}
             finished={!!active && isFinished}
@@ -147,23 +167,30 @@ export function TimerPanel({
             <TimerRobot size={30} />
 
             <span
-              className="time"
-              data-long={timerText.length > 5}
+              className={`font-semibold leading-none text-primary ${
+                timerText.length > 5
+                  ? "text-[30px]"
+                  : "text-[42px]"
+              }`}
               aria-label={`${timerText} remaining`}
             >
               {timerText}
             </span>
 
-            <div className="indicators" aria-hidden="true">
+            <div className="flex gap-1.5" aria-hidden="true">
               {[0, 1, 2, 3].map((step) => (
                 <span
                   key={step}
-                  data-lit={!!active && pct >= step * 25}
+                  className={`h-[7px] w-[3px] rounded-[2px] ${
+                    active && pct >= step * 25
+                      ? "bg-[#ff351b]"
+                      : "border border-soft"
+                  }`}
                 />
               ))}
             </div>
 
-            <span className="mode">
+            <span className="text-[9px] leading-3 font-semibold uppercase tracking-[2px] text-[#a3a3a3]">
               {!active
                 ? "Standby"
                 : timer.phase === "paused"
@@ -175,82 +202,72 @@ export function TimerPanel({
           </TimerDial>
 
           {/* Timer controls */}
-          <div className="controls">
-            <button
-              type="button"
-              className="roundButton"
-              aria-label="View on-hold tasks"
-              title="On-hold tasks"
-              onClick={() =>
-                onHoldRef.current?.scrollIntoView({
-                  block: "nearest",
-                })
-              }
-            >
-              <PauseCircle size={16} />
-            </button>
+         <div className="flex w-full items-center justify-center gap-3">
+ <button
+  type="button"
+  className={ROUND_BUTTON_CLASS}
+  disabled={!active && !resumableTask}
+  onClick={() =>
+    active
+      ? holdTask(active.id)
+      : resumableTask && startTask(resumableTask.id)
+  }
+>
+  {active ? (
+    <>
+      <Pause className="h-3 w-3" />
+    
+    </>
+  ) : resumableTask ? (
+    <>
+      <Play className="h-3 w-3 fill-current" />
+     
+    </>
+  ) : (
+    <Play className="h-3 w-3 fill-current" />
+  )}
+</button>
 
-            <button
-              type="button"
-              className="mainButton"
-              disabled={!active && !resumableTask}
-              onClick={() =>
-                active
-                  ? holdTask(active.id)
-                  : resumableTask && startTask(resumableTask.id)
-              }
-            >
-              {active
-                ? "Pause"
-                : resumableTask
-                  ? "Resume"
-                  : "Ready"}
-            </button>
-
-            <button
-              type="button"
-              className="roundButton"
-              aria-label="Complete task"
-              title="Complete task"
-              disabled={!active}
-              onClick={() =>
-                active && completeTask(active.id)
-              }
-            >
-              <CheckCircle2 size={16} />
-            </button>
-          </div>
+  <button
+    type="button"
+    className={ROUND_BUTTON_CLASS}
+    aria-label="Complete task"
+    title="Complete task"
+    disabled={!active}
+    onClick={() => active && completeTask(active.id)}
+  >
+    <CheckCircle2 size={16} />
+  </button>
+</div>
         </div>
 
         {/* Timer statistics */}
-        <div className="flex h-4 shrink-0 items-center justify-center gap-4 text-[10px] text-muted-foreground">
-          <span>
-            <strong className="font-mono font-medium text-foreground">
-              {formatDuration(active ? spent : 0)}
-            </strong>{" "}
-            spent
-          </span>
+       <div className="flex h-4 shrink-0 items-center justify-center gap-4 text-[10px] text-muted-foreground">
+  <span
+    aria-hidden="true"
+    className="h-3 w-3.5 shrink-0 bg-primary"
+  />
 
-          <span
-            aria-hidden="true"
-            className="h-3 w-px bg-border"
-          />
+  <span>
+    <strong className="font-mono font-medium text-foreground">
+      {formatDuration(active ? spent : 0)}
+    </strong>{" "}
+    spent
+  </span>
 
-          <span>
-            <strong className="font-mono font-medium text-foreground">
-              {formatDuration(
-                active?.plannedDurationSeconds ?? 0,
-              )}
-            </strong>{" "}
-            planned
-          </span>
-        </div>
+  <span
+    aria-hidden="true"
+    className="h-3 w-3.5 shrink-0 bg-primary"
+  />
 
-        <p className="flex h-8 items-center justify-center text-center text-[11px] leading-4 text-muted-foreground">
-          {active
-            ? "One task. Your full attention."
-            : "Resume an on-hold task or move one into progress."}
-        </p>
+  <span>
+    <strong className="font-mono font-medium text-foreground">
+      {formatDuration(active?.plannedDurationSeconds ?? 0)}
+    </strong>{" "}
+    planned
+  </span>
+</div>
+
       </div>
 
       {/* ON-HOLD TASKS */}
@@ -266,22 +283,18 @@ export function TimerPanel({
         "
       >
         <div className="mb-2 flex items-center gap-1.5">
-          <PauseCircle
-            size={14}
-            className="text-warning"
-          />
 
-          <span className="text-xs font-semibold text-foreground">
+          <span className="text-sm font-semibold text-foreground">
             On hold
           </span>
 
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-steel">
             {onHold.length}
           </span>
         </div>
 
         {onHold.length === 0 ? (
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-[10px] text-steel">
             Nothing on hold.
           </p>
         ) : (
@@ -323,11 +336,11 @@ export function TimerPanel({
                   "
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] font-medium text-foreground">
+                    <p className="truncate text-sm font-medium text-foreground">
                       {task.title}
                     </p>
 
-                    <p className="text-[9px] tabular-nums text-muted-foreground">
+                    <p className="text-[9px] !font-inter text-muted-foreground">
                       {formatDuration(rem)} left
                     </p>
                   </div>
@@ -344,7 +357,6 @@ export function TimerPanel({
                       shrink-0
                       items-center
                       gap-1
-                      rounded-md
                       bg-primary
                       px-2
                       text-[10px]

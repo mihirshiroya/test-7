@@ -23,7 +23,10 @@ export function TimerDial({
   const angle = (clamped / 100) * 2 * Math.PI
 
   return (
-    <div className="timer-dial" data-finished={finished}>
+    <div
+      className="relative aspect-square w-full max-w-56 shrink-0"
+      data-finished={finished}
+    >
       <svg
         viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
         className="size-full -rotate-90"
@@ -39,15 +42,15 @@ export function TimerDial({
           >
             <stop
               offset="0%"
-              stopColor="var(--timer-accent-soft)"
+              stopColor="#a74638"
             />
             <stop
               offset="38%"
-              stopColor="var(--timer-accent)"
+              stopColor="#ff351b"
             />
             <stop
               offset="100%"
-              stopColor="var(--timer-accent)"
+              stopColor="#ff351b"
             />
           </linearGradient>
         </defs>
@@ -57,8 +60,7 @@ export function TimerDial({
           cy="112"
           r="111"
           fill="none"
-          stroke="var(--timer-outline)"
-          strokeWidth="1"
+          className="stroke-border stroke-3 stroke-slate-600/20"
         />
 
         <circle
@@ -66,7 +68,7 @@ export function TimerDial({
           cy="112"
           r={RADIUS}
           fill="none"
-          stroke="var(--timer-track)"
+          stroke="transparent"
           strokeWidth={STROKE}
         />
 
@@ -88,14 +90,16 @@ export function TimerDial({
               cx={112 + RADIUS * Math.cos(angle)}
               cy={112 + RADIUS * Math.sin(angle)}
               r="3.5"
-              fill="var(--timer-highlight)"
-              className="timer-progress-tip"
+              fill="#ffcf8a"
+              className="drop-shadow-[0_0_3px_#ffcf8a]"
             />
           </>
         )}
       </svg>
 
-      <div className="timer-dial-content">{children}</div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5">
+        {children}
+      </div>
     </div>
   )
 }

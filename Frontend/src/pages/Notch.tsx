@@ -207,14 +207,19 @@ export default function NotchNavbar({
           TIMER SIDEBAR
       ========================== */}
       <aside
+        aria-label="Focus timer"
+        aria-hidden={!sidebarOpen}
+        inert={!sidebarOpen}
         className={`
           fixed
           right-0
           top-0
           z-[110]
+          flex
           h-dvh
-          w-[390px]
+          w-[360px]
           max-w-[92vw]
+          flex-col
           border-l
           border-soft
           bg-canvas
@@ -236,6 +241,7 @@ export default function NotchNavbar({
           className="
             flex
             h-14
+            shrink-0
             items-center
             justify-between
             border-b
@@ -281,7 +287,7 @@ export default function NotchNavbar({
         {/* =========================
             TIMER PANEL
         ========================== */}
-        <div className="h-[calc(100dvh-56px)] overflow-hidden">
+        <div className="min-h-0 flex-1">
           <TimerPanel />
         </div>
       </aside>

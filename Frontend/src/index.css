@@ -2003,9 +2003,8 @@ select::-webkit-scrollbar-thumb:hover {
 @media (prefers-reduced-motion: reduce) { .auth-icon-item { animation: none; } .auth-icon-tile, .auth-icon-core, .auth-icon-label { transition: opacity 0.2s ease; transform: none !important; filter: none !important; } }
 
 
-.face {
+.timer-face {
   --timer-surface: #080808;
-  --timer-track: #343434;
   --timer-outline: #202020;
   --timer-text: #f7f7f5;
   --timer-muted: #a3a3a3;
@@ -2016,25 +2015,20 @@ select::-webkit-scrollbar-thumb:hover {
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
-  gap: 4px;
+  gap: 16px;
   width: 100%;
-  padding: 18px 16px 16px;
-  border: 1px solid var(--timer-track);
-  border-radius: 32px;
-  background: var(--timer-surface);
+  padding: 20px 16px 16px;
   color: var(--timer-text);
-  box-shadow: 0 8px 24px #00000018, inset 0 1px 0 #ffffff0a;
 }
 
-.dial {
+.timer-dial {
   position: relative;
-  width: 224px;
-  max-width: 100%;
+  width: min(224px, 100%);
   aspect-ratio: 1;
   flex-shrink: 0;
 }
 
-.dialContent {
+.timer-dial-content {
   position: absolute;
   inset: 0;
   display: flex;
@@ -2044,7 +2038,7 @@ select::-webkit-scrollbar-thumb:hover {
   gap: 10px;
 }
 
-.time {
+.timer-time {
   color: var(--timer-text);
   font-size: 42px;
   font-weight: 600;
@@ -2053,13 +2047,13 @@ select::-webkit-scrollbar-thumb:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.time[data-long="true"] { font-size: 30px; letter-spacing: -1px; }
+.timer-time[data-long="true"] { font-size: 30px; letter-spacing: -1px; }
 
-.indicators { display: flex; gap: 6px; }
-.indicators span { width: 3px; height: 7px; border-radius: 2px; background: var(--timer-track); }
-.indicators span[data-lit="true"] { background: var(--timer-accent); }
+.timer-indicators { display: flex; gap: 6px; }
+.timer-indicators span { width: 3px; height: 7px; border-radius: 2px; background: var(--timer-track); }
+.timer-indicators span[data-lit="true"] { background: var(--timer-accent); }
 
-.mode {
+.timer-mode {
   color: var(--timer-muted);
   font-size: 9px;
   line-height: 12px;
@@ -2067,16 +2061,16 @@ select::-webkit-scrollbar-thumb:hover {
   text-transform: uppercase;
 }
 
-.controls { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 12px; width: 100%; }
-.controls button { cursor: pointer; transition: background 150ms, color 150ms; }
-.controls button:focus-visible { outline: 2px solid var(--timer-text); outline-offset: 4px; }
-.controls button:disabled { cursor: not-allowed; opacity: 0.4; }
-.roundButton { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--timer-track); border-radius: 50%; color: var(--timer-muted); }
-.roundButton:hover:not(:disabled) { color: var(--timer-text); background: var(--timer-outline); }
-.mainButton { display: flex; align-items: center; justify-content: center; gap: 6px; justify-self: center; height: 36px; width: 108px; max-width: 100%; border: 1px solid #ffffff0d; border-radius: 999px; background: var(--timer-track); color: var(--timer-text); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
-.mainButton:hover:not(:disabled) { background: #454545; }
-.progressTip { filter: drop-shadow(0 0 3px var(--timer-highlight)); }
+.timer-controls { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 12px; width: 100%; }
+.timer-controls button { cursor: pointer; transition: background 150ms, color 150ms; }
+.timer-controls button:focus-visible { outline: 2px solid var(--timer-text); outline-offset: 4px; }
+.timer-controls button:disabled { cursor: not-allowed; opacity: 0.4; }
+.timer-round-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--timer-track); border-radius: 50%; color: var(--timer-muted); }
+.timer-round-button:hover:not(:disabled) { color: var(--timer-text); background: var(--timer-outline); }
+.timer-main-button { display: flex; align-items: center; justify-content: center; gap: 6px; justify-self: center; height: 36px; width: 108px; max-width: 100%; border: 1px solid #ffffff0d; border-radius: 999px; background: var(--timer-track); color: var(--timer-text); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.timer-main-button:hover:not(:disabled) { background: #454545; }
+.timer-progress-tip { filter: drop-shadow(0 0 3px var(--timer-highlight)); }
 
 @media (prefers-reduced-motion: reduce) {
-  .controls button { transition: none; }
+  .timer-controls button { transition: none; }
 }
