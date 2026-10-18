@@ -2001,3 +2001,82 @@ select::-webkit-scrollbar-thumb:hover {
 .auth-icon-tile:focus-visible { box-shadow: 0 0 0 2px var(--auth-paper, #fff), 0 0 0 4px var(--auth-wordmark); }
 @keyframes auth-icon-in { from { opacity: 0; filter: blur(6px); transform: translateY(12px); } to { opacity: 1; filter: blur(0); transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .auth-icon-item { animation: none; } .auth-icon-tile, .auth-icon-core, .auth-icon-label { transition: opacity 0.2s ease; transform: none !important; filter: none !important; } }
+
+
+.face {
+  --timer-surface: #080808;
+  --timer-track: #343434;
+  --timer-outline: #202020;
+  --timer-text: #f7f7f5;
+  --timer-muted: #a3a3a3;
+  --timer-accent: #ff351b;
+  --timer-accent-soft: #a74638;
+  --timer-highlight: #ffcf8a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+  width: 100%;
+  padding: 18px 16px 16px;
+  border: 1px solid var(--timer-track);
+  border-radius: 32px;
+  background: var(--timer-surface);
+  color: var(--timer-text);
+  box-shadow: 0 8px 24px #00000018, inset 0 1px 0 #ffffff0a;
+}
+
+.dial {
+  position: relative;
+  width: 224px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+.dialContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.time {
+  color: var(--timer-text);
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.time[data-long="true"] { font-size: 30px; letter-spacing: -1px; }
+
+.indicators { display: flex; gap: 6px; }
+.indicators span { width: 3px; height: 7px; border-radius: 2px; background: var(--timer-track); }
+.indicators span[data-lit="true"] { background: var(--timer-accent); }
+
+.mode {
+  color: var(--timer-muted);
+  font-size: 9px;
+  line-height: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.controls { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 12px; width: 100%; }
+.controls button { cursor: pointer; transition: background 150ms, color 150ms; }
+.controls button:focus-visible { outline: 2px solid var(--timer-text); outline-offset: 4px; }
+.controls button:disabled { cursor: not-allowed; opacity: 0.4; }
+.roundButton { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--timer-track); border-radius: 50%; color: var(--timer-muted); }
+.roundButton:hover:not(:disabled) { color: var(--timer-text); background: var(--timer-outline); }
+.mainButton { display: flex; align-items: center; justify-content: center; gap: 6px; justify-self: center; height: 36px; width: 108px; max-width: 100%; border: 1px solid #ffffff0d; border-radius: 999px; background: var(--timer-track); color: var(--timer-text); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.mainButton:hover:not(:disabled) { background: #454545; }
+.progressTip { filter: drop-shadow(0 0 3px var(--timer-highlight)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .controls button { transition: none; }
+}

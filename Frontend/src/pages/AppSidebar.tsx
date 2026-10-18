@@ -44,6 +44,13 @@ import { logoutUser } from '../store/slices/authSlice'
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../store'
 import { toast } from '../lib/toast'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/Ui/dropdown-menu'
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -129,7 +136,6 @@ function AppSidebar() {
   const [collapsed, setCollapsed] = useState(getInitialCollapsed)
   const [query] = useState('')
   const [notifications, setNotifications] = useState(3)
-  const [profileOpen, setProfileOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [projectDialog, setProjectDialog] = useState<{
     mode: 'create' | 'edit'
@@ -364,7 +370,6 @@ function AppSidebar() {
   try {
     await dispatch(logoutUser(false)).unwrap()
 
-    setProfileOpen(false)
     setMobileOpen(false)
     navigate('/login')
   } catch (error) {
@@ -652,42 +657,25 @@ function AppSidebar() {
                 )}
               </button>
 
-              <div className="relative">
-                <button
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   aria-label="Open profile menu"
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="ml-2 grid size-8 place-items-center rounded-full bg-background-inverse text-xs font-semibold text-inverse"
+                  className="ml-2 grid size-8 place-items-center rounded-full bg-background-inverse text-xs font-semibold text-inverse outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   AM
-                </button>
-
-              {profileOpen && (
-  <div className="absolute right-0 top-10 z-40 w-48 rounded-lg border border-border bg-popover p-1 text-sm shadow-lg">
-    <button
-      type="button"
-      onClick={() => {
-        setProfileOpen(false)
-        go('/profile')
-      }}
-      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-accent"
-    >
-      <Settings className="size-4" />
-      Account settings
-    </button>
-
-    <div className="my-1 border-t border-border" />
-
-    <button
-      type="button"
-      onClick={handleLogout}
-      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-red-500 hover:bg-red-500/10"
-    >
-      <LogOut className="size-4" />
-      Logout
-    </button>
-  </div>
-)}
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => go('/profile')}>
+                    <Settings />
+                    Account settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                    <LogOut />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 

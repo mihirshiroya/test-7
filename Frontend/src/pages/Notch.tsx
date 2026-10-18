@@ -10,47 +10,9 @@ import {
 } from "../store/slices/taskSlice"
 
 import { TimerPanel } from "../components/Ui/timer-panel"
-import {
-  RobotHead,
-  useRobotPresence,
-  type RobotState,
-} from "../components/Ui/robot-head"
+import { RobotHead, useRobotPresence } from "../components/Ui/robot-head"
+import { ROBOT_COLOR, getTimerRobotState } from "../components/Ui/timer-robot"
 import { useAuth } from "../hooks/useAuth"
-import type { TimerPhase } from "../store/slices/taskSlice"
-
-const ROBOT_COLOR: Record<RobotState, string> = {
-  idle: "#8b8f98",
-  sleeping: "#6b7280",
-  active: "#22c55e",
-  thinking: "#f59e0b",
-  listening: "#8b5cf6",
-  surprised: "#f97316",
-  happy: "#facc15",
-  error: "#ef4444",
-}
-
-/** Maps the focus timer's live state to a robot mood. */
-function getTimerRobotState({
-  hasTask,
-  phase,
-  isStale,
-  remaining,
-  planned,
-}: {
-  hasTask: boolean
-  phase: TimerPhase
-  isStale: boolean
-  remaining: number
-  planned: number
-}): RobotState {
-  if (!hasTask || phase === "stopped") return "sleeping"
-  if (isStale) return "listening"
-  if (phase === "paused") return "idle"
-  if (planned > 0 && remaining <= 0) return "happy"
-  if (planned > 0 && remaining <= Math.min(60, planned * 0.1)) return "surprised"
-  if (planned > 0 && remaining <= planned * 0.25) return "thinking"
-  return "active"
-}
 
 interface NotchNavbarProps {
   brand?: string
@@ -282,21 +244,15 @@ export default function NotchNavbar({
           "
         >
           <div className="flex items-center gap-2">
-            {/* Timer status */}
             <div
-              className={`
-                h-2
-                w-2
-                rounded-full
-                ${
-                  hasActiveTask
-                    ? "animate-pulse bg-green-500"
-                    : "bg-muted-foreground/40"
-                }
-              `}
+              className={`h-2 w-2 rounded-full ${
+                hasActiveTask
+                  ? "animate-pulse bg-green-500"
+                  : "bg-muted-foreground/40"
+              }`}
             />
 
-            <span className="text-sm font-semibold text-foreground">
+            <span className="text-md font-semibold text-foreground">
               Focus Timer
             </span>
           </div>

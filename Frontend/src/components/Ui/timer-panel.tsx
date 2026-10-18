@@ -1,12 +1,16 @@
+
 "use client"
+
+import { useRef } from "react"
 
 import {
   Play,
-  Pause,
   CheckCircle2,
   PauseCircle,
-  Hourglass,
 } from "lucide-react"
+
+import { TimerRobot } from "./timer-robot"
+import { TimerDial } from "./timer-dial"
 
 import {
   useActiveTask,
@@ -40,7 +44,13 @@ export function TimerPanel({
     spentSeconds: spent,
   } = useActiveTask()
 
+  const onHoldRef = useRef<HTMLDivElement>(null)
+
   const hasActiveTask = !!timer.taskId
+
+  const timerText = active
+    ? formatDuration(Math.max(0, remaining))
+    : "00:00"
 
   const onHold = tasks
     .filter(
@@ -50,16 +60,20 @@ export function TimerPanel({
     )
     .sort((a, b) => a.position - b.position)
 
+  const resumableTask = onHold.find((task) =>
+    isTaskStartAllowed(tasks, timer, task.id),
+  )
+
   const pct =
     active && active.plannedDurationSeconds > 0
-      ? Math.min(100, Math.max(0, (spent / active.plannedDurationSeconds) * 100))
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            (spent / active.plannedDurationSeconds) * 100,
+          ),
+        )
       : 0
-
-  const radius = 62
-
-  const circumference = 2 * Math.PI * radius
-
-  const offset = circumference - (pct / 100) * circumference
 
   const isFinished = remaining <= 0
 
@@ -71,15 +85,6 @@ export function TimerPanel({
    * ============================
    * COMPACT TIMER
    * ============================
-   *
-   * Can be used when only the timer
-   * needs to be displayed.
-   *
-   * No active task:
-   * 00 : 00
-   *
-   * Active task:
-   * remaining time
    */
   if (compact) {
     return (
@@ -93,7 +98,9 @@ export function TimerPanel({
           text-foreground
         "
       >
-        {hasActiveTask ? formatDuration(Math.max(0, remaining)) : "00:00"}
+        {hasActiveTask
+          ? formatDuration(Math.max(0, remaining))
+          : "00:00"}
       </span>
     )
   }
@@ -106,322 +113,149 @@ export function TimerPanel({
         h-full
         min-h-0
         flex-col
-        overflow-hidden
-        bg-card
+        overflow-y-auto
+        bg-canvas
       "
     >
-      {/* =========================
-          ACTIVE TASK
-      ========================== */}
-      {active ? (
-        <div className="flex flex-col items-center px-4 py-5">
-          {/* Task */}
-          <div
-            className="
-              mb-4
-              flex
-              w-full
-              min-w-0
-              items-center
-              justify-center
-              gap-2
-            "
+      {/* TIMER CARD */}
+      <div className="flex shrink-0 flex-col gap-4 p-4">
+        {/* Task / workspace */}
+        <div className="flex h-10 min-w-0 flex-col items-center justify-center gap-1 text-center">
+          <span
+            className="w-full truncate text-[9px] font-medium uppercase tracking-widest text-muted-foreground"
+            title={activeWorkspace?.name}
           >
+            {active
+              ? activeWorkspace?.name ?? "Workspace"
+              : "Ready when you are"}
+          </span>
+
+          <p
+            className="w-full truncate text-xs font-medium text-foreground"
+            title={active?.title}
+          >
+            {active?.title ?? "No active task"}
+          </p>
+        </div>
+
+        {/* Timer face */}
+        <div className="face">
+          <TimerDial
+            progress={pct}
+            finished={!!active && isFinished}
+          >
+            <TimerRobot size={30} />
+
             <span
-              className="
-                shrink-0
-                rounded-full
-                bg-muted
-                px-2
-                py-0.5
-                text-[9px]
-                font-medium
-                uppercase
-                tracking-wide
-                text-muted-foreground
-              "
+              className="time"
+              data-long={timerText.length > 5}
+              aria-label={`${timerText} remaining`}
             >
-              {activeWorkspace?.name ?? "Workspace"}
+              {timerText}
             </span>
 
-            <p
-              className="
-                min-w-0
-                truncate
-                text-xs
-                font-medium
-                text-foreground
-              "
-              title={active.title}
-            >
-              {active.title}
-            </p>
-          </div>
-
-          {/* =========================
-              CIRCULAR TIMER
-          ========================== */}
-          <div
-            className="
-              relative
-              size-[156px]
-              shrink-0
-              sm:size-[170px]
-            "
-          >
-            <svg
-              viewBox="0 0 150 150"
-              className="
-                size-full
-                -rotate-90
-              "
-              aria-hidden="true"
-            >
-              {/* Background ring */}
-              <circle
-                cx="75"
-                cy="75"
-                r={radius}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="7"
-                className="text-muted"
-              />
-
-              {/* Progress ring */}
-              <circle
-                cx="75"
-                cy="75"
-                r={radius}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="7"
-                strokeLinecap="round"
-                className={isFinished ? "text-destructive" : "text-primary"}
-                strokeDasharray={circumference}
-                strokeDashoffset={offset}
-                style={{
-                  transition: "stroke-dashoffset 500ms linear",
-                }}
-              />
-            </svg>
-
-            {/* Timer content */}
-            <div
-              className="
-                absolute
-                inset-0
-                flex
-                flex-col
-                items-center
-                justify-center
-              "
-            >
-              <span
-                className="
-                  text-[9px]
-                  uppercase
-                  tracking-wider
-                  text-muted-foreground
-                "
-              >
-                {isFinished ? "Time's up" : "Remaining"}
-              </span>
-
-              <span
-                className={`
-                  mt-1
-                  font-mono
-                  text-3xl
-                  font-semibold
-                  leading-none
-                  tabular-nums
-                  ${isFinished ? "text-destructive" : "text-foreground"}
-                `}
-              >
-                {formatDuration(Math.max(0, remaining))}
-              </span>
-
-              <span
-                className="
-                  mt-2
-                  text-[9px]
-                  tabular-nums
-                  text-muted-foreground
-                "
-              >
-                {Math.round(pct)}% complete
-              </span>
+            <div className="indicators" aria-hidden="true">
+              {[0, 1, 2, 3].map((step) => (
+                <span
+                  key={step}
+                  data-lit={!!active && pct >= step * 25}
+                />
+              ))}
             </div>
-          </div>
 
-          {/* =========================
-              STATS
-          ========================== */}
-          <div
-            className="
-              mt-4
-              flex
-              items-center
-              gap-4
-              text-[10px]
-              text-muted-foreground
-            "
-          >
-            <span>
-              <strong
-                className="
-                  font-mono
-                  font-medium
-                  text-foreground
-                "
-              >
-                {formatDuration(spent)}
-              </strong>{" "}
-              spent
+            <span className="mode">
+              {!active
+                ? "Standby"
+                : timer.phase === "paused"
+                  ? "Paused"
+                  : isFinished
+                    ? "Time's up"
+                    : "Focus"}
             </span>
+          </TimerDial>
 
-            <span
-              className="
-                h-3
-                w-px
-                bg-border
-              "
-            />
-
-            <span>
-              <strong
-                className="
-                  font-mono
-                  font-medium
-                  text-foreground
-                "
-              >
-                {formatDuration(active.plannedDurationSeconds)}
-              </strong>{" "}
-              planned
-            </span>
-          </div>
-
-          {/* =========================
-              ACTIONS
-          ========================== */}
-          <div
-            className="
-              mt-4
-              flex
-              w-full
-              max-w-[280px]
-              gap-2
-            "
-          >
+          {/* Timer controls */}
+          <div className="controls">
             <button
               type="button"
-              onClick={() => holdTask(active.id)}
-              className="
-                flex
-                h-9
-                flex-1
-                items-center
-                justify-center
-                gap-1.5
-                rounded-lg
-                border
-                border-soft
-                bg-background
-                text-xs
-                font-medium
-                text-warning
-                transition-colors
-                hover:bg-warning-soft
-              "
+              className="roundButton"
+              aria-label="View on-hold tasks"
+              title="On-hold tasks"
+              onClick={() =>
+                onHoldRef.current?.scrollIntoView({
+                  block: "nearest",
+                })
+              }
             >
-              <Pause size={14} />
-              Pause
+              <PauseCircle size={16} />
             </button>
 
             <button
               type="button"
-              onClick={() => completeTask(active.id)}
-              className="
-                flex
-                h-9
-                flex-1
-                items-center
-                justify-center
-                gap-1.5
-                rounded-lg
-                bg-success
-                text-xs
-                font-medium
-                text-success-foreground
-                transition-opacity
-                hover:opacity-90
-              "
+              className="mainButton"
+              disabled={!active && !resumableTask}
+              onClick={() =>
+                active
+                  ? holdTask(active.id)
+                  : resumableTask && startTask(resumableTask.id)
+              }
             >
-              <CheckCircle2 size={14} />
-              Complete
+              {active
+                ? "Pause"
+                : resumableTask
+                  ? "Resume"
+                  : "Ready"}
+            </button>
+
+            <button
+              type="button"
+              className="roundButton"
+              aria-label="Complete task"
+              title="Complete task"
+              disabled={!active}
+              onClick={() =>
+                active && completeTask(active.id)
+              }
+            >
+              <CheckCircle2 size={16} />
             </button>
           </div>
         </div>
-      ) : (
-        /* =========================
-           EMPTY STATE
-        ========================== */
-        <div
-          className="
-            flex
-            min-h-[210px]
-            flex-col
-            items-center
-            justify-center
-            px-6
-            py-5
-            text-center
-          "
-        >
-          <div
-            className="
-              mb-2
-              flex
-              size-10
-              items-center
-              justify-center
-              rounded-full
-              bg-muted
-            "
-          >
-            <Hourglass size={18} className="text-muted-foreground" />
-          </div>
 
-          <p
-            className="
-              text-xs
-              font-medium
-              text-foreground
-            "
-          >
-            No active task
-          </p>
+        {/* Timer statistics */}
+        <div className="flex h-4 shrink-0 items-center justify-center gap-4 text-[10px] text-muted-foreground">
+          <span>
+            <strong className="font-mono font-medium text-foreground">
+              {formatDuration(active ? spent : 0)}
+            </strong>{" "}
+            spent
+          </span>
 
-          <p
-            className="
-              mt-1
-              max-w-[260px]
-              text-[11px]
-              leading-4
-              text-muted-foreground
-            "
-          >
-            Resume an on-hold task or move one into progress.
-          </p>
+          <span
+            aria-hidden="true"
+            className="h-3 w-px bg-border"
+          />
+
+          <span>
+            <strong className="font-mono font-medium text-foreground">
+              {formatDuration(
+                active?.plannedDurationSeconds ?? 0,
+              )}
+            </strong>{" "}
+            planned
+          </span>
         </div>
-      )}
 
-      {/* =========================
-          ON HOLD
-      ========================== */}
+        <p className="flex h-8 items-center justify-center text-center text-[11px] leading-4 text-muted-foreground">
+          {active
+            ? "One task. Your full attention."
+            : "Resume an on-hold task or move one into progress."}
+        </p>
+      </div>
+
+      {/* ON-HOLD TASKS */}
       <div
+        ref={onHoldRef}
         className="
           mt-auto
           border-t
@@ -431,43 +265,23 @@ export function TimerPanel({
           py-3
         "
       >
-        <div
-          className="
-            mb-2
-            flex
-            items-center
-            gap-1.5
-          "
-        >
-          <PauseCircle size={14} className="text-warning" />
+        <div className="mb-2 flex items-center gap-1.5">
+          <PauseCircle
+            size={14}
+            className="text-warning"
+          />
 
-          <span
-            className="
-              text-xs
-              font-semibold
-              text-foreground
-            "
-          >
+          <span className="text-xs font-semibold text-foreground">
             On hold
           </span>
 
-          <span
-            className="
-              text-[10px]
-              text-muted-foreground
-            "
-          >
+          <span className="text-[10px] text-muted-foreground">
             {onHold.length}
           </span>
         </div>
 
         {onHold.length === 0 ? (
-          <p
-            className="
-              text-[10px]
-              text-muted-foreground
-            "
-          >
+          <p className="text-[10px] text-muted-foreground">
             Nothing on hold.
           </p>
         ) : (
@@ -483,10 +297,15 @@ export function TimerPanel({
             {onHold.map((task) => {
               const rem = Math.max(
                 0,
-                task.plannedDurationSeconds - taskSpentSeconds(task, timer),
+                task.plannedDurationSeconds -
+                  taskSpentSeconds(task, timer),
               )
 
-              const canResumeNow = isTaskStartAllowed(tasks, timer, task.id)
+              const canResumeNow = isTaskStartAllowed(
+                tasks,
+                timer,
+                task.id,
+              )
 
               return (
                 <li
@@ -504,24 +323,11 @@ export function TimerPanel({
                   "
                 >
                   <div className="min-w-0 flex-1">
-                    <p
-                      className="
-                        truncate
-                        text-[11px]
-                        font-medium
-                        text-foreground
-                      "
-                    >
+                    <p className="truncate text-[11px] font-medium text-foreground">
                       {task.title}
                     </p>
 
-                    <p
-                      className="
-                        text-[9px]
-                        tabular-nums
-                        text-muted-foreground
-                      "
-                    >
+                    <p className="text-[9px] tabular-nums text-muted-foreground">
                       {formatDuration(rem)} left
                     </p>
                   </div>
@@ -529,7 +335,9 @@ export function TimerPanel({
                   <button
                     type="button"
                     onClick={() => startTask(task.id)}
-                    disabled={hasActiveTask && !canResumeNow}
+                    disabled={
+                      hasActiveTask && !canResumeNow
+                    }
                     className="
                       flex
                       h-7
@@ -558,13 +366,7 @@ export function TimerPanel({
         )}
 
         {hasActiveTask && onHold.length > 0 && (
-          <p
-            className="
-              mt-2
-              text-[9px]
-              text-muted-foreground
-            "
-          >
+          <p className="mt-2 text-[9px] text-muted-foreground">
             Pause or complete the current task to resume another.
           </p>
         )}
