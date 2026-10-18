@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { toast } from 'sonner'
+import { toast } from '../../lib/toast'
 import { useAppDispatch } from '../../store'
 import { addTopic, addSubtopic, addContent, updateContent, updateTopic, updateSubtopic, deleteTopic, deleteSubtopic, deleteContent } from '../../store/slices/notesSlice'
 import type { Content } from '../../lib/docs-data'

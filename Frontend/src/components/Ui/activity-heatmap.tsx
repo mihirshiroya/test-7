@@ -192,7 +192,7 @@ export function ActivityHeatmap({
         Consistency heatmap
       </h3>
 
-      <p className="mt-1 text-body-sm text-steel !font-semibold">
+      <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
         {activeDays} active days ·{" "}
         {formatMinutes(totalMinutes)} focused in {currentYear}
       </p>

@@ -1,5 +1,15 @@
 import React from 'react';
-import { CheckCheck } from 'lucide-react';
+import {
+  CalendarDays,
+  BadgeCheck  ,
+  FolderKanban,
+  LayoutGrid,
+  ListChecks,
+  NotebookPen,
+  Sparkles,
+  Timer,
+  type LucideIcon,
+} from 'lucide-react';
 import logo from '../../assets/logo.png';
 import halftoneBackground from '../../assets/auth-halftone.png';
 import textlogo from '../../assets/text-logo.png';
@@ -26,7 +36,7 @@ interface AuthLayoutProps {
 
 
 /* Shared class names so every auth screen has identical buttons */
-export const authPrimaryButton = 'auth-button auth-button--primary';
+export const authPrimaryButton = 'auth-button auth-button--primary font-outfit';
 export const authOutlineButton = 'auth-button auth-button--outline';
 export const authLinkClass = 'auth-link';
 
@@ -80,16 +90,15 @@ const backgroundStyle: React.CSSProperties = {
   backgroundImage: `url(${halftoneBackground})`,
 };
 
-/* Wordmarks in the reference each use a different typographic style */
-const brandStyles = [
-  'font-black italic tracking-tight',
-  'font-black uppercase tracking-wider',
-  'font-bold lowercase tracking-tight',
-  'font-extrabold tracking-tight',
-  'font-black uppercase tracking-widest',
-  'font-semibold italic tracking-tight',
-];
-const workspaceFeatures = ['Tasks', 'Calendar', 'Notes', 'Projects', 'Focus', 'Workspaces'];
+const featureIcons: Record<string, LucideIcon> = {
+  Tasks: ListChecks,
+  Calendar: CalendarDays,
+  Notes: NotebookPen,
+  Projects: FolderKanban,
+  Focus: Timer,
+  Workspaces: LayoutGrid,
+};
+const workspaceFeatures = ['Tasks', 'Calendar', 'Notes', 'Focus', 'Workspaces'];
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({
   eyebrow,
@@ -120,7 +129,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   <span className="auth-eyebrow-x auth-eyebrow-x-tl">×</span>
   <span className="auth-eyebrow-x auth-eyebrow-x-tr">×</span>
 
-  {eyebrow}
+    <span className='font-bold'>{eyebrow}</span> 
 
   <span className="auth-eyebrow-x auth-eyebrow-x-bl">×</span>
   <span className="auth-eyebrow-x auth-eyebrow-x-br">×</span>
@@ -133,9 +142,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         {points.map((point) => (
           <li key={point}>
             <span className="auth-check">
-              <CheckCheck
+              <BadgeCheck  
                 size={13}
-                strokeWidth={2}
+                strokeWidth={1}
                 aria-hidden="true"
               />
             </span>
@@ -146,19 +155,28 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
       </ul>
     )}
 
-    <div
-      className="auth-wordmarks"
+    <ul
+      className="auth-icon-row"
       aria-label={brands.length ? "Partners" : "Workspace features"}
     >
-      {wordmarks.map((wordmark, i) => (
-        <span
-          key={wordmark}
-          className={brandStyles[i % brandStyles.length]}
-        >
-          {wordmark}
-        </span>
-      ))}
-    </div>
+      {wordmarks.map((label, i) => {
+        const Icon = featureIcons[label] ?? Sparkles;
+        return (
+          <li
+            key={label}
+            className="auth-icon-item"
+            style={{ '--i': i } as React.CSSProperties}
+          >
+            <span className="auth-icon-tile" tabIndex={0} aria-label={label}>
+              <span className="auth-icon-core">
+                <Icon size={18} strokeWidth={2.25} aria-hidden="true" />
+              </span>
+            </span>
+            <span className="auth-icon-label" aria-hidden="true">{label}</span>
+          </li>
+        );
+      })}
+    </ul>
   </div>
 
   {/* Get Started Image */}

@@ -104,7 +104,7 @@ export function RecentActivity({ items }: { items: Activity[] }) {
 
               {/* Content */}
               <div className="min-w-0 flex-1 pt-0.5 transition-transform duration-200 group-hover:translate-x-0.5">
-                <p className="text-body-sm text-primary transition-colors duration-200 group-hover:text-primary-hover">
+                <p className="text-body-sm !font-inter text-primary transition-colors duration-200 group-hover:text-primary-hover">
                   {item.text}
                 </p>
                 <p className="mt-0.5 flex items-center gap-1.5 text-caption text-stone">

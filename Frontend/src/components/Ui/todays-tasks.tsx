@@ -74,7 +74,7 @@ export function TodaysTasks() {
         <div className="min-w-0">
           <h3 className="text-heading-5 text-primary">Today&apos;s tasks</h3>
 
-          <p className="mt-1 text-body-sm text-steel">
+          <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
             {tasks.length === 0
               ? "No tasks scheduled"
               : `${completedCount} of ${tasks.length} complete`}
@@ -145,7 +145,7 @@ export function TodaysTasks() {
                     </div>
 
                     <span
-                      className={`shrink-0 whitespace-nowrap px-2 py-0.5 text-caption-bold capitalize ${getPriorityClass(
+                      className={`shrink-0 whitespace-nowrap px-2 py-0.5 text-xs ${getPriorityClass(
                         task.priority,
                       )}`}
                     >

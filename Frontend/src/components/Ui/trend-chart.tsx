@@ -86,7 +86,7 @@ export function TrendChart({
               >
                 {/* Tooltip */}
                 {active && (
-                  <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-notion border border-color bg-canvas px-3 py-2 text-caption shadow-[var(--shadow-card)]">
+                  <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-full whitespace-nowrap border border-color bg-canvas px-3 py-2 text-caption shadow-[var(--shadow-card)]">
                     <div className="text-caption-bold text-primary">
                       {d.label}
                     </div>
@@ -183,7 +183,7 @@ function Legend({
   return (
     <span className="flex items-center gap-1.5 text-caption text-steel">
       <span
-        className={`relative h-2.5 w-2.5 overflow-hidden rounded-sm ${gradientClass} ${
+        className={`relative h-2.5 w-2.5 overflow-hidden ${gradientClass} ${
           outline ? "border border-strong" : ""
         }`}
       >

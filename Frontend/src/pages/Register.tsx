@@ -256,7 +256,7 @@ const Register: React.FC = () => {
         )}
       </Formik>
 
-      <AuthDivider />
+      {/* <AuthDivider />
 
       <Button
         type="button"
@@ -274,7 +274,7 @@ const Register: React.FC = () => {
             <span>Sign up with Google</span>
           </>
         )}
-      </Button>
+      </Button> */}
     </AuthLayout>
   );
 };

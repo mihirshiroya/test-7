@@ -17,7 +17,7 @@ export function Input({ label, error, helperText, id, className = '', ...props }
 
   return (
     <div className="auth-field" data-invalid={error ? true : undefined}>
-      <label htmlFor={inputId} className="auth-label">
+      <label htmlFor={inputId} className="auth-label ">
         {label}
       </label>
       <StyledInput
@@ -48,7 +48,7 @@ export function Button({ loading, disabled, children, variant = 'primary', class
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`auth-button auth-button--${variant} ${className}`}
+      className={`auth-button auth-button--${variant} ${className} `}
     >
       {loading && <LoaderCircle className="animate-spin" aria-hidden="true" />}
       {children}

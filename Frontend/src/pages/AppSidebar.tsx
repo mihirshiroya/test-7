@@ -257,12 +257,12 @@ function AppSidebar() {
         : 'stroke-1 stroke-[var(--color-nav-hover-text)]',
     )
 
-  const titleClass = cn('min-w-0 flex-1 truncate text-left', hideWhenCollapsed)
+  const titleClass = cn('min-w-0 flex-1 truncate text-left !font-inter', hideWhenCollapsed)
 
   const workspaceIconClass = cn('grid size-6 shrink-0 place-items-center rounded-md')
 
   const workspaceTitleClass = cn(
-    'min-w-0 flex-1 truncate text-left',
+    'min-w-0 flex-1 truncate text-left !font-inter',
     collapsed && 'md:hidden',
   )
 
@@ -499,7 +499,7 @@ function AppSidebar() {
               )}
             >
               <span
-                className={cn('text-sm font-semibold', collapsed && 'md:hidden')}
+                className={cn('text-sm font-semibold tracking-wide', collapsed && 'md:hidden')}
               >
                 Workspaces
               </span>
@@ -629,7 +629,7 @@ function AppSidebar() {
                 <Menu className="size-5" />
               </button>
 
-              <div className="flex items-center gap-2 text-sm font-medium text-secondary">
+              <div className="flex items-center gap-2 text-sm font-medium text-secondary !font-inter">
                 <span className="hidden sm:inline">Workspace</span>
                 <ChevronRight className="hidden size-4 sm:inline" />
                 <span className="text-primary">{current.label}</span>

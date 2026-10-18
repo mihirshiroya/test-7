@@ -128,23 +128,12 @@ const ThemedToaster: React.FC = () => {
   return (
     <Toaster
       position="top-right"
-      duration={4000}
-      closeButton
-      richColors
       visibleToasts={4}
-      gap={10}
+      gap={12}
       offset={20}
       theme={theme}
-      toastOptions={{
-        classNames: {
-          toast:
-            'font-sans !rounded-xl !border !px-4 !py-3.5 !shadow-xl !backdrop-blur-md',
-          title: '!text-sm !font-semibold !leading-snug',
-          description: '!text-xs !leading-relaxed !opacity-80',
-          icon: '!mr-1',
-          closeButton: '!rounded-full',
-        },
-      }}
+      style={{ '--width': '400px' } as React.CSSProperties}
+      toastOptions={{ unstyled: true, className: 'w-full' }}
     />
   );
 };

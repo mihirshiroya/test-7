@@ -1,12 +1,12 @@
 /**
- * Global toast utility — wraps Sonner's `toast` with app-wide defaults.
- *
- * Import this instead of importing directly from "sonner" so that all toasts
- * across the app share the same look, duration, and behaviour automatically.
+ * Global toast utility — renders every toast through the app's custom
+ * `AppToast` component (via Sonner's `toast.custom`) so all toasts share
+ * the same look, countdown, and behaviour automatically.
  *
  * Usage:
  *   import { toast } from '../lib/toast';
  *   toast.success('Saved!', { description: 'Your changes are live.' });
+ *   toast.success('Changes saved', { action: { label: 'Undo', onClick: undo } });
  *   toast.error('Sign in failed', { description: 'Incorrect email or password.' });
  *   toast.apiError(error, 'Could not save changes');
  *
@@ -15,16 +15,61 @@
  * reporting the same failure never stack two copies.
  */
 
-import { toast as sonnerToast, type ExternalToast } from 'sonner';
+import { createElement, type ReactNode } from 'react';
+import { toast as sonnerToast } from 'sonner';
+import { AppToast, type AppToastAction, type AppToastType } from '../components/Ui/app-toast';
 
-const BASE: ExternalToast = {
-  duration: 4000,
-  closeButton: true,
+export interface ToastOptions {
+  id?: string | number;
+  description?: ReactNode;
+  /** Auto-close delay in ms. Use `Infinity` to keep it open. */
+  duration?: number;
+  action?: AppToastAction;
+  /** Show the "This message will close in N seconds" footer. */
+  showCountdown?: boolean;
+  onDismiss?: () => void;
+}
+
+const DEFAULT_DURATION: Record<AppToastType, number> = {
+  success: 4000,
+  info: 4000,
+  warning: 5000,
+  error: 6000,
+  loading: Infinity,
 };
 
-const makeId = (type: string, message: string, options?: ExternalToast) => {
+const makeId = (type: string, message: string, options?: ToastOptions) => {
   const description = typeof options?.description === 'string' ? options.description : '';
   return `${type}:${message}:${description}`;
+};
+
+let customIdCounter = 0;
+
+const show = (type: AppToastType, message: ReactNode, options: ToastOptions = {}) => {
+  const id =
+    options.id ??
+    (typeof message === 'string' && type !== 'loading' ? makeId(type, message, options) : `toast-${++customIdCounter}`);
+  const duration = options.duration ?? DEFAULT_DURATION[type];
+  const showCountdown = options.showCountdown ?? (Boolean(options.action) || type === 'success');
+
+  return sonnerToast.custom(
+    (toastId) =>
+      createElement(AppToast, {
+        // Re-mount when an existing toast id is reused (e.g. loading → success) so the timer restarts.
+        key: `${type}:${String(message)}`,
+        type,
+        title: message,
+        description: options.description,
+        action: options.action,
+        duration,
+        showCountdown,
+        onDismiss: () => {
+          sonnerToast.dismiss(toastId);
+          options.onDismiss?.();
+        },
+      }),
+    { id, duration: Infinity, unstyled: true },
+  );
 };
 
 /** Turns any thrown value (axios error, Error, string) into a user-friendly message. */
@@ -67,30 +112,32 @@ export const getErrorMessage = (error: unknown, fallback = 'Something went wrong
 };
 
 export const toast = {
-  success: (message: string, options?: ExternalToast) =>
-    sonnerToast.success(message, { ...BASE, id: makeId('success', message, options), ...options }),
+  success: (message: string, options?: ToastOptions) => show('success', message, options),
 
-  error: (message: string, options?: ExternalToast) =>
-    sonnerToast.error(message, { ...BASE, duration: 6000, id: makeId('error', message, options), ...options }),
+  error: (message: string, options?: ToastOptions) => show('error', message, options),
 
-  info: (message: string, options?: ExternalToast) =>
-    sonnerToast.info(message, { ...BASE, id: makeId('info', message, options), ...options }),
+  info: (message: string, options?: ToastOptions) => show('info', message, options),
 
-  warning: (message: string, options?: ExternalToast) =>
-    sonnerToast.warning(message, { ...BASE, duration: 5000, id: makeId('warning', message, options), ...options }),
+  warning: (message: string, options?: ToastOptions) => show('warning', message, options),
 
-  loading: (message: string, options?: ExternalToast) =>
-    sonnerToast.loading(message, { ...BASE, duration: Infinity, ...options }),
+  loading: (message: string, options?: ToastOptions) => show('loading', message, options),
 
   /** Shows an error toast: `title` as heading, the extracted error as the explanation. */
-  apiError: (error: unknown, title = 'Something went wrong', options?: ExternalToast) =>
+  apiError: (error: unknown, title = 'Something went wrong', options?: ToastOptions) =>
     toast.error(title, { description: getErrorMessage(error), ...options }),
 
   promise: <T>(
     promise: Promise<T>,
     msgs: { loading: string; success: string; error: string },
-    options?: ExternalToast,
-  ) => sonnerToast.promise(promise, { ...msgs, ...BASE, ...options }),
+    options?: ToastOptions,
+  ) => {
+    const id = toast.loading(msgs.loading, options);
+    promise.then(
+      () => show('success', msgs.success, { ...options, id }),
+      (error) => show('error', msgs.error, { description: getErrorMessage(error), ...options, id }),
+    );
+    return promise;
+  },
 
   dismiss: (id?: string | number) => sonnerToast.dismiss(id),
 };

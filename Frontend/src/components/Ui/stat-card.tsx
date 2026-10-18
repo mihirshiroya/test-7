@@ -86,10 +86,9 @@ export function StatCard({
       <div className="relative z-10 flex items-center justify-between gap-3">
         <span
           className="
-            text-lg font-medium tracking-tight
-            text-secondary
+            text-xl font-medium
             transition-colors
-            group-hover:text-foreground
+            group-hover:text-foreground font-semibold
           "
         >
           {metric.label}
@@ -113,7 +112,7 @@ export function StatCard({
           {formatValue(metric, current)}
         </span>
              <span
-          className={`font-semibold tabular-nums text-xs ${
+          className={`font-semibold tabular-nums text-xs !font-inter ${
             isPositive
               ? "text-emerald-600 dark:text-emerald-400"
               : isNegative
@@ -127,7 +126,7 @@ export function StatCard({
       </div>
 
       {/* Comparison Subtext */}
-      <div className="relative z-10 mt-2 flex items-center gap-2 text-xs text-secondary">
+      <div className="relative z-10 mt-2 flex items-center gap-2 text-xs text-secondary !font-inter">
         <span>
           vs {formatValue(metric, previous)} {periodLabel}
         </span>

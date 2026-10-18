@@ -77,21 +77,13 @@ export default function Overview() {
       <div className="flex w-full flex-col gap-[clamp(1rem,3vw,1.75rem)]">
         <header className="flex w-full flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-heading-3 text-primary text-balance">
+            <h1 className="text-heading-3 text-primary text-balance !font-inter">
               {getGreeting(user?.firstName || "there")}
             </h1>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => dispatch(fetchOverview())}
-              disabled={status === "loading"}
-              aria-label="Refresh dashboard"
-              className="inline-flex size-9 items-center justify-center border border-soft bg-canvas text-primary outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
-            >
-              <RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
-            </button>
+          
 
             <DropdownMenu open={open} onOpenChange={setOpen}>
               <DropdownMenuTrigger
