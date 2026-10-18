@@ -16,6 +16,7 @@ import {
   useActiveTask,
   useTaskStore,
   formatDuration,
+  formatClock,
   taskSpentSeconds,
   isTaskStartAllowed,
 } from "../../store/slices/taskSlice"
@@ -52,7 +53,7 @@ export function TimerPanel({
   const hasActiveTask = !!timer.taskId
 
   const timerText = active
-    ? formatDuration(Math.max(0, remaining))
+    ? formatClock(Math.max(0, Math.floor(remaining)))
     : "00:00"
 
   const onHold = tasks

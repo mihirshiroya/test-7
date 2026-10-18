@@ -39,6 +39,7 @@ import {
   type TintKey,
   type IconKey,
 } from '../components/Ui/project-data'
+import { NotificationsPanel } from '../components/Ui/notificaion-panel.tsx'
 import { useWorkspaceStore } from '../store/slices/taskSlice.tsx'
 import { logoutUser } from '../store/slices/authSlice'
 import { useDispatch } from 'react-redux'
@@ -136,6 +137,7 @@ function AppSidebar() {
   const [collapsed, setCollapsed] = useState(getInitialCollapsed)
   const [query] = useState('')
   const [notifications, setNotifications] = useState(3)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [projectDialog, setProjectDialog] = useState<{
     mode: 'create' | 'edit'
@@ -168,6 +170,11 @@ function AppSidebar() {
         icon: workspace.icon ?? DEFAULT_APPEARANCE.icon,
       })),
     [workspaces],
+  )
+
+  const notificationWorkspaces = useMemo(
+    () => projects.map((project) => ({ id: project.id, name: project.label })),
+    [projects],
   )
 
   /* ------------------------------------------------------------------------ */
@@ -647,7 +654,11 @@ function AppSidebar() {
 
               <button
                 aria-label="Notifications"
-                onClick={() => setNotifications(0)}
+                aria-expanded={notificationsOpen}
+                onClick={() => {
+                  setNotifications(0)
+                  setNotificationsOpen(true)
+                }}
                 className="relative grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <Bell className="size-[18px]" />
@@ -683,6 +694,12 @@ function AppSidebar() {
             <Outlet />
           </main>
         </div>
+
+        <NotificationsPanel
+          open={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+          workspaces={notificationWorkspaces}
+        />
 
         {/* Create / Edit workspace dialog */}
         <ProjectDialog

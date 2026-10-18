@@ -124,7 +124,7 @@ export function FolderCard({
         </h3>
       </button>
 
-      <div className="mt-1 flex items-center gap-1.5 text-sm text-steel">
+      <div className="mt-1 flex items-center gap-1.5 text-sm text-steel !font-inter">
         <FileText className="size-3.5" />
 
         <span>
