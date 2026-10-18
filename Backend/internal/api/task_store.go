@@ -256,14 +256,33 @@ func openSession(ctx context.Context, q database.Querier, userID, taskID string)
 // closeOpenSession ends the task's running session, adds its duration to the
 // task and records SESSION_COMPLETED. Returns the session length in seconds.
 func closeOpenSession(ctx context.Context, q database.Querier, userID, taskID string) (int, error) {
+	return closeOpenSessionCapped(ctx, q, userID, taskID, 0)
+}
+
+// closeOpenSessionCapped is closeOpenSession, but when plannedSeconds > 0 the
+// session is trimmed so the task's total tracked time never exceeds the plan.
+// Used on completion so overtime past the planned duration is not saved.
+func closeOpenSessionCapped(ctx context.Context, q database.Querier, userID, taskID string, plannedSeconds int) (int, error) {
 	session, err := findOpenSession(ctx, q, taskID)
 	if err != nil || session == nil {
 		return 0, err
 	}
 	now := compat.Now()
 	seconds := elapsedSeconds(session.StartedAt, now)
-	if _, err := q.Exec(ctx, `UPDATE task_sessions SET "endedAt" = $2, "durationSeconds" = $3, "updatedAt" = $2 WHERE id = $1`,
-		session.ID, now, seconds); err != nil {
+	endedAt := now
+	if plannedSeconds > 0 {
+		var closed int
+		if err := q.QueryRow(ctx, `SELECT COALESCE(SUM("durationSeconds"), 0)::int FROM task_sessions
+			WHERE "taskId" = $1 AND "endedAt" IS NOT NULL`, taskID).Scan(&closed); err != nil {
+			return 0, err
+		}
+		if allowed := max(0, plannedSeconds-closed); seconds > allowed {
+			seconds = allowed
+			endedAt = session.StartedAt.Add(time.Duration(seconds) * time.Second)
+		}
+	}
+	if _, err := q.Exec(ctx, `UPDATE task_sessions SET "endedAt" = $2, "durationSeconds" = $3, "updatedAt" = $4 WHERE id = $1`,
+		session.ID, endedAt, seconds, now); err != nil {
 		return 0, err
 	}
 	if _, err := q.Exec(ctx, `UPDATE tasks SET "actualDurationSeconds" = "actualDurationSeconds" + $2, "updatedAt" = $3 WHERE id = $1`,

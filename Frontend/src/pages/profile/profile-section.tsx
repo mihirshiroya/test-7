@@ -32,6 +32,7 @@ import type { Achievement, ProfileAnalytics, ProjectSummary } from '../../compon
 
 import { FOLDER_ICONS, type IconKey } from '../../components/Ui/folder-data'
 import { FunnelChartCard } from '../../components/Ui/funnel-chart'
+import { useTaskStore } from '../../store/slices/taskSlice'
 
 
 
@@ -1025,29 +1026,31 @@ export function ProfileProjects({ projects }: { projects: ProjectSummary[] | nul
 
 
   
-const stages = useMemo(
-  () => [
-    {
-      name: 'Total Tasks',
-      value: list.reduce((sum, project) => sum + project.total, 0),
-    },
-    {
-      name: 'Started Tasks',
-      value: list.reduce(
-        (sum, project) =>
-          sum + Math.max(0, project.total - project.done === 0
-            ? 0
-            : project.total - project.done),
-        0,
-      ),
-    },
-    {
-      name: 'Completed Tasks',
-      value: list.reduce((sum, project) => sum + project.done, 0),
-    },
-  ],
-  [list],
-)
+  const { tasks, status: tasksStatus } = useTaskStore()
+
+  const taskCounts = useMemo(() => {
+    let notStarted = 0
+    let started = 0
+    let completed = 0
+    for (const task of tasks) {
+      if (task.status === 'TODO') notStarted += 1
+      else if (task.status === 'COMPLETED') completed += 1
+      else started += 1
+    }
+    return { total: tasks.length, notStarted, started, completed }
+  }, [tasks])
+
+  const stages = useMemo(
+    () => [
+      { name: 'Total Tasks', value: taskCounts.total },
+      { name: 'Not Started', value: taskCounts.notStarted },
+      { name: 'Started', value: taskCounts.started },
+      { name: 'Completed', value: taskCounts.completed },
+    ],
+    [taskCounts],
+  )
+
+  const tasksReady = tasksStatus === 'succeeded' || tasksStatus === 'failed'
 
 
   const filtered = filter === 'All' ? list : list.filter((project) => project.status === filter)
@@ -1098,17 +1101,17 @@ const stages = useMemo(
 
 
 
-      {projects ? (
+      {tasksReady ? (
         <div className="mt-5">
           <FunnelChartCard
-            title="Project completion funnel"
+            title="Task completion funnel"
             stages={stages}
-            subtitle={`All time · ${summary.done} of ${summary.total} project tasks completed`}
+            subtitle={`All time · ${taskCounts.completed} of ${taskCounts.total} tasks completed`}
           />
         </div>
       ) : (
         <div className="mt-5 rounded-2xl border border-soft p-5 text-sm text-primary/60" role="status">
-          Loading project progress…
+          Loading task progress…
         </div>
       )}
 

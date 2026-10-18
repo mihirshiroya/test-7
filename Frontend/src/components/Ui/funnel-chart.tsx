@@ -35,10 +35,10 @@ export function FunnelChartCard({ title, stages, subtitle }: { title: string; st
         {geometry.map((stage, index) => <path key={stages[index].name} d={stage.path} fill={stage.color} opacity={active !== null && active !== index ? .3 : .85} onMouseEnter={() => setActive(index)} className="transition-opacity" />)}
       </svg>
       {geometry.map((stage, index) => <span key={stages[index].name} aria-hidden="true" className="work-pill pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 px-2 py-1 text-xs font-medium tabular-nums" style={{ left: `${stage.pillX}%` }}>{stage.share}%</span>)}
-    </div> : <p className="work-empty">Your project journey starts with your first project.</p>}
+    </div> : <p className="work-empty">Your task journey starts with your first task.</p>}
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {stages.map((stage, index) => <StatTile key={stage.name} label={stage.name} value={formatNumber(stage.value)} color={geometry[index].color} active={active === index} dimmed={active !== null && active !== index} onMouseEnter={() => setActive(index)} onMouseLeave={() => setActive(null)} />)}
     </div>
-    <p className="text-xs leading-relaxed text-secondary">Cumulative stages, based on current project tasks. Percentages show the share of all projects, not historical conversion rates.</p>
+    <p className="text-xs leading-relaxed text-secondary">Live counts from your tasks. Started includes in-progress and on-hold tasks. Percentages show each stage&apos;s share of all tasks.</p>
   </ChartCard>
 }

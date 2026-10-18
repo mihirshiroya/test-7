@@ -605,7 +605,11 @@ func (s *Server) moveTask(w http.ResponseWriter, r *http.Request) {
 		ordered := slices.Insert(slices.Clone(siblings), insertAt, task.ID)
 
 		if statusChanged && task.Status == statusInProgress {
-			if _, err := closeOpenSession(ctx, tx, userID, task.ID); err != nil {
+			capSeconds := 0
+			if newStatus == statusCompleted {
+				capSeconds = task.PlannedDurationSeconds
+			}
+			if _, err := closeOpenSessionCapped(ctx, tx, userID, task.ID, capSeconds); err != nil {
 				return err
 			}
 		}
@@ -667,7 +671,11 @@ func (s *Server) moveTask(w http.ResponseWriter, r *http.Request) {
 // transition moves a task to the end of `status`, closing its running session
 // first. It is shared by hold and complete.
 func transitionTask(ctx context.Context, tx pgx.Tx, userID string, task *taskRow, status string, extra func(*database.Sets)) (*taskRow, error) {
-	if _, err := closeOpenSession(ctx, tx, userID, task.ID); err != nil {
+	capSeconds := 0
+	if status == statusCompleted {
+		capSeconds = task.PlannedDurationSeconds
+	}
+	if _, err := closeOpenSessionCapped(ctx, tx, userID, task.ID, capSeconds); err != nil {
 		return nil, err
 	}
 	pos, err := nextTaskPosition(ctx, tx, userID, task.WorkspaceID, status)
