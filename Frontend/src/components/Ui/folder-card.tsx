@@ -1,8 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoreHorizontal, Pencil, Trash2, FileText, Edit3, ArrowUpRight } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu'
 import {
   FOLDER_TINTS,
   FOLDER_ICONS,
@@ -19,7 +25,6 @@ export function FolderCard({
   onEdit?: () => void
   onDelete?: () => void
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
 
   const Icon = FOLDER_ICONS[folder.icon]
@@ -54,62 +59,43 @@ export function FolderCard({
           </button>
 
           {onEdit && onDelete && (
-            <div className="relative">
-              <button
-                type="button"
+            <DropdownMenu>
+              <DropdownMenuTrigger
                 aria-label="Folder actions"
-                onClick={() => setMenuOpen((v) => !v)}
-                className="flex size-8 items-center justify-center text-steel hover:bg-gray-tint"
+                className="flex size-8 items-center justify-center text-steel hover:bg-gray-tint data-popup-open:bg-gray-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <MoreHorizontal className="size-[18px] rotate-90" />
-              </button>
+              </DropdownMenuTrigger>
 
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-9 z-20 w-40 border border-soft bg-canvas p-1 shadow-xl"
+              <DropdownMenuContent align="end" sideOffset={6} className="w-40">
+                <DropdownMenuItem
+                  onClick={goToEditNotes}
+                  className="gap-2 !text-inter rounded-none px-2.5 py-2 text-steel data-highlighted:bg-gray-tint data-highlighted:text-ink"
                 >
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      goToEditNotes()
-                    }}
-                    className="flex w-full items-center gap-2 px-2.5 py-2 text-sm text-steel hover:bg-gray-tint"
-                  >
-                    <Edit3 className="size-4" />
-                    Edit notes
-                  </button>
+                  <Edit3 className="size-4" />
+                  Edit notes
+                </DropdownMenuItem>
 
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      onEdit()
-                    }}
-                    className="flex w-full items-center gap-2 px-2.5 py-2 text-sm text-steel hover:bg-gray-tint"
-                  >
-                    <Pencil className="size-4" />
-                    Rename
-                  </button>
+                <DropdownMenuItem
+                  onClick={onEdit}
+                  className="gap-2 !text-inter rounded-none px-2.5 py-2 text-steel data-highlighted:bg-gray-tint data-highlighted:text-ink"
+                >
+                  <Pencil className="size-4" />
+                  Rename
+                </DropdownMenuItem>
 
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      onDelete()
-                    }}
-                    className="flex w-full items-center gap-2 px-2.5 py-2 text-sm text-error hover:bg-rose"
-                  >
-                    <Trash2 className="size-4" />
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
+        
+
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={onDelete}
+                  className="gap-2 text-inter! rounded-none px-2.5 py-2 text-error data-highlighted:bg-rose data-highlighted:text-error"
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
@@ -124,17 +110,19 @@ export function FolderCard({
         </h3>
       </button>
 
-      <div className="mt-1 flex items-center gap-1.5 text-sm text-steel !font-inter">
-        <FileText className="size-3.5" />
+      <div className="mt-1 flex items-center gap-1.5 text-sm leading-none text-steel">
+  <FileText className="size-3.5 shrink-0" />
 
-        <span>
-          {folder.items} {folder.items === 1 ? 'section' : 'sections'}
-        </span>
+  <span className="leading-none">
+    {folder.items} {folder.items === 1 ? "section" : "sections"}
+  </span>
 
-        <span className="text-stone">·</span>
+  <span className="text-stone leading-none">·</span>
 
-        <span>{relativeTime(folder.updatedAt)}</span>
-      </div>
+  <span className="text-[12px] leading-none">
+    {relativeTime(folder.updatedAt)}
+  </span>
+</div>
           </div>
       
 

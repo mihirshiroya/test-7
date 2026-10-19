@@ -333,7 +333,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
     <aside
       id="handbook-navigation"
       aria-label="Documentation navigation"
-      className={`min-h-0 shrink-0 flex-col border-r bg-white dark:bg-[#1b1a20] ${LINE} ${
+      className={`min-h-0 shrink-0 flex-col border-r bg-canvas ${LINE} ${
         mobileOpen
           ? 'fixed inset-y-0 left-0 z-40 flex w-[min(300px,85vw)] shadow-[12px_0_40px_rgba(0,0,0,0.15)] md:static md:z-auto md:w-56 md:shadow-none min-[1100px]:w-[232px]'
           : 'hidden md:flex md:w-56 min-[1100px]:w-[232px]'
