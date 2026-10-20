@@ -551,7 +551,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
       {searchOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 backdrop-blur-xs">
           <div
-            className={`w-full max-w-xl overflow-hidden rounded-[10px] border bg-docs-paper shadow-2xl ${LINE}`}
+            className={`w-full max-w-xl overflow-hidden border bg-docs-paper shadow-2xl ${LINE}`}
           >
             <div className={`flex items-center border-b bg-docs-soft/60 px-4 py-3 ${LINE}`}>
               <Search className={`mr-3 size-5 ${MUTED}`} />
@@ -591,7 +591,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
                         setSearchOpen(false)
                         setSearchQuery('')
                       }}
-                      className={`flex w-full items-center justify-between rounded-md p-3 text-left transition-colors hover:bg-docs-active ${FOCUS}`}
+                      className={`flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-docs-active ${FOCUS}`}
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
