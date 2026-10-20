@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen.tsx'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { DocsNavTree } from '../components/Ui/docs-nav-tree'
 import {
-  ChevronDown,
   ChevronRight,
   FileText,
   Plus,
@@ -28,34 +28,26 @@ import {
 
 import type { Doc, Topic, Subtopic, Content } from '../lib/docs-data'
 
-/* -----------------------------------------------------------------------------
- * Shared Tailwind class strings (light / dark)
- * paper  #ffffff / #1b1a20     ink    #28262e / #eeeaf4
- * muted  #716d79 / #aaa4b5     line   #eeecf2 / #302c38
- * soft   #f7f6f9 / #24212b     active #f0ecf8 / #30283f
- * accent #6950a8 / #c1a5ef
- *
- * For `dark:` to follow your `.dark` class in Tailwind v4, add once to CSS:
- *   @custom-variant dark (&:where(.dark, .dark *));
- * -------------------------------------------------------------------------- */
+/* Shared Tailwind class strings. Colors come from the docs-* tokens in index.css,
+ * which switch values under `.dark`, so no `dark:` variants are needed here. */
 
-const LINE = 'border-[#eeecf2] dark:border-[#302c38]'
-const MUTED = 'text-[#716d79] dark:text-[#aaa4b5]'
-const INK = 'text-[#28262e] dark:text-[#eeeaf4]'
-const PAPER = 'bg-white dark:bg-[#1b1a20]'
-const SOFT = 'bg-[#f7f6f9] dark:bg-[#24212b]'
-const ACTIVE = 'bg-[#f0ecf8] dark:bg-[#30283f]'
-const ACCENT = 'text-[#6950a8] dark:text-[#c1a5ef]'
-const HOVER_SOFT = 'hover:bg-[#f7f6f9] dark:hover:bg-[#24212b]'
-const HOVER_ACTIVE = 'hover:bg-[#f0ecf8] dark:hover:bg-[#30283f]'
+const LINE = 'border-docs-line'
+const MUTED = 'text-docs-muted'
+const INK = 'text-docs-ink'
+const PAPER = 'bg-docs-paper'
+const SOFT = 'bg-docs-soft'
+const ACTIVE = 'bg-docs-active'
+const ACCENT = 'text-docs-accent'
+const HOVER_SOFT = 'hover:bg-docs-soft'
+const HOVER_ACTIVE = 'hover:bg-docs-active'
 const FOCUS =
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6950a8] dark:focus-visible:outline-[#c1a5ef]'
-const DANGER = 'text-red-600 dark:text-red-400'
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-docs-accent'
+const DANGER = 'text-docs-danger'
 const REVEAL = 'opacity-0 [@media(hover:none)]:opacity-100'
 const PRIMARY_BTN =
-  'bg-[#6950a8] text-white shadow-md shadow-[#6950a8]/20 transition-colors hover:bg-[#7a60bf] disabled:cursor-not-allowed disabled:opacity-50'
+  'bg-docs-primary text-white shadow-md shadow-docs-primary/20 transition-colors hover:bg-docs-primary-hover disabled:cursor-not-allowed disabled:opacity-50'
 const FIELD =
-  'border bg-[#f7f6f9]/60 px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-[#716d79] focus:border-[#6950a8] focus:ring-2 focus:ring-[#6950a8]/20 dark:bg-[#24212b]/60 dark:placeholder:text-[#aaa4b5] dark:focus:border-[#c1a5ef] dark:focus:ring-[#c1a5ef]/20'
+  'border bg-docs-soft/60 px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-docs-muted focus:border-docs-accent focus:ring-2 focus:ring-docs-accent/20'
 
 // -----------------------------------------------------------------------------
 // Types
@@ -670,7 +662,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
     <aside
       id="handbook-navigation"
       aria-label="Documentation navigation"
-      className={`min-h-0 shrink-0 flex-col border-r ${PAPER} ${LINE} ${
+      className={`min-h-0 shrink-0 flex-col border-r border-soft bg-canvas ${
         mobileOpen
           ? 'fixed inset-y-0 left-0 z-40 flex w-[min(300px,85vw)] shadow-[12px_0_40px_rgba(0,0,0,0.15)] md:static md:z-auto md:w-56 md:shadow-none min-[1100px]:w-[260px]'
           : 'hidden md:flex md:w-56 min-[1100px]:w-[260px]'
@@ -684,13 +676,13 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       />
 
       {/* Topics header */}
-      <div className={`flex shrink-0 items-center justify-between gap-2 px-[22px] pb-2.5 text-[11px] font-medium ${MUTED}`}>
+      <div className={`flex shrink-0 items-center justify-between gap-2 px-4.5 pb-2.5 text-[11px] font-medium ${MUTED}`}>
         <span>Topics & Sections</span>
 
         <button
           type="button"
           onClick={() => setModal('topic')}
-          className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${ACCENT} ${HOVER_ACTIVE} ${FOCUS}`}
+          className={`inline-flex items-center gap-1 rounded-md py-1 text-xs font-medium transition-colors ${ACCENT} ${HOVER_ACTIVE} ${FOCUS}`}
           aria-label="Add topic"
         >
           <Plus className="size-3.5" />
@@ -698,165 +690,60 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       </div>
 
       {/* Navigation */}
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 pb-5 pt-2">
-        {doc.topics.map((item) => {
-          const isExpanded = Boolean(expanded[item.id])
-          const isCurrentTopic = topic?.id === item.id
-          const hasSubtopics = item.subtopics.length > 0
-
-          return (
-            <div key={item.id} className="group">
-              {/* Topic */}
-              <div
-                className={`relative flex items-center rounded-md transition-all duration-200 ${
-                  isCurrentTopic ? 'bg-[#28262e]/[0.045] dark:bg-white/[0.06]' : HOVER_SOFT
-                }`}
+      <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-5 pt-2">
+        <DocsNavTree
+          topics={doc.topics}
+          activeSubtopicId={subtopic?.id}
+          expanded={expanded}
+          onTopicClick={(item) => {
+            setExpanded((previous) => ({ ...previous, [item.id]: !previous[item.id] }))
+            if (!item.subtopics[0]) {
+              setTopicId(item.id)
+              setSubtopicId('')
+            }
+          }}
+          onSubtopicClick={select}
+          renderTopicActions={(item) => (
+            <div
+              className={`flex items-center gap-0.5 transition-opacity duration-150 group-hover/topic:opacity-100 group-focus-within/topic:opacity-100 ${REVEAL}`}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setModal('subtopic')
+                  setTopicId(item.id)
+                  setSubtopicId(item.subtopics[0]?.id ?? '')
+                }}
+                className={`flex size-6 items-center justify-center rounded transition-colors hover:text-docs-accent ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                title="Add subtopic"
+                aria-label={`Add subtopic to ${item.title}`}
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExpanded((previous) => ({
-                      ...previous,
-                      [item.id]: !previous[item.id],
-                    }))
-
-                    if (item.subtopics[0]) {
-                      select(item, item.subtopics[0])
-                    } else {
-                      setTopicId(item.id)
-                      setSubtopicId('')
-                    }
-                  }}
-                  className={`flex min-w-0 flex-1 items-center gap-[9px] rounded-md px-2.5 py-[9px] text-left ${FOCUS}`}
-                >
-                  <FileText size={14} aria-hidden="true" className={`shrink-0 ${MUTED}`} />
-
-                  <span
-                    className={`min-w-0 flex-1 truncate text-[12px] ${INK} ${
-                      isCurrentTopic ? 'font-semibold' : 'font-medium opacity-80'
-                    }`}
-                  >
-                    {item.title}
-                  </span>
-                </button>
-
-                {/* Actions */}
-                <div className="flex shrink-0 items-center">
-                  <div
-                    className={`flex items-center gap-0.5 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 ${REVEAL}`}
-                  >
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setModal('subtopic')
-                        setTopicId(item.id)
-                        setSubtopicId(item.subtopics[0]?.id ?? '')
-                      }}
-                      className={`flex size-7 items-center justify-center rounded transition-colors hover:text-[#6950a8] dark:hover:text-[#c1a5ef] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
-                      title="Add subtopic"
-                      aria-label={`Add subtopic to ${item.title}`}
-                    >
-                      <Plus className="size-3.5" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={(event) => deleteTopic(item.id, event)}
-                      className={`flex size-7 items-center justify-center rounded transition-colors hover:bg-red-500/10 ${FOCUS}`}
-                      title={`Delete topic ${item.title}`}
-                      aria-label={`Delete topic ${item.title}`}
-                    >
-                      <Trash2 className={`size-3.5 ${DANGER}`} />
-                    </button>
-                  </div>
-
-                  {hasSubtopics && (
-                    <button
-                      type="button"
-                      aria-label={isExpanded ? `Collapse ${item.title}` : `Expand ${item.title}`}
-                      aria-expanded={isExpanded}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setExpanded((previous) => ({
-                          ...previous,
-                          [item.id]: !previous[item.id],
-                        }))
-                      }}
-                      className={`mr-2 flex size-7 shrink-0 items-center justify-center rounded transition-all duration-200 ${HOVER_ACTIVE} ${FOCUS} ${
-                        isExpanded ? `${ACTIVE} ${INK}` : MUTED
-                      }`}
-                    >
-                      {isExpanded ? (
-                        <ChevronDown className="size-4" />
-                      ) : (
-                        <ChevronRight className="size-4" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Subtopics */}
-              {isExpanded && hasSubtopics && (
-                <div className={`relative mb-1 ml-6 mt-1 border-l border-dotted ${LINE}`}>
-                  <div className="space-y-0.5">
-                    {item.subtopics.map((child) => {
-                      const isSelected = subtopic?.id === child.id
-
-                      return (
-                        <div
-                          key={child.id}
-                          className="group/subtopic relative flex min-w-0 items-center"
-                        >
-                          <div
-                            data-active={isSelected || undefined}
-                            className={`relative flex min-w-0 flex-1 items-center rounded-[5px] transition-all duration-150 ${
-                              isSelected
-                                ? `${ACTIVE} ${ACCENT}`
-                                : `${MUTED} ${HOVER_SOFT} hover:text-[#28262e] dark:hover:text-[#eeeaf4]`
-                            }`}
-                          >
-                            {isSelected && (
-                              <span className="absolute -left-px top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#6950a8] dark:bg-[#c1a5ef]" />
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={() => select(item, child)}
-                              aria-current={isSelected ? 'page' : undefined}
-                              className={`flex min-w-0 flex-1 items-center gap-2.5 rounded-[5px] px-2.5 py-2 text-left ${FOCUS}`}
-                            >
-                              <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium">
-                                {child.title}
-                              </span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={(event) => deleteSubtopic(item, child.id, event)}
-                              className={`mr-1 flex size-6 shrink-0 items-center justify-center rounded transition-all hover:bg-red-500/10 focus-visible:opacity-100 group-hover/subtopic:opacity-100 ${REVEAL} ${FOCUS}`}
-                              title={`Delete subtopic ${child.title}`}
-                              aria-label={`Delete subtopic ${child.title}`}
-                            >
-                              <Trash2 className={`size-3 ${DANGER}`} />
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+                <Plus className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(event) => deleteTopic(item.id, event)}
+                className={`flex size-6 items-center justify-center rounded transition-colors hover:bg-red-500/10 ${FOCUS}`}
+                title={`Delete topic ${item.title}`}
+                aria-label={`Delete topic ${item.title}`}
+              >
+                <Trash2 className={`size-3.5 ${DANGER}`} />
+              </button>
             </div>
-          )
-        })}
-
-        {doc.topics.length === 0 && (
-          <p className={`px-2.5 py-4 text-xs ${MUTED}`}>
-            No topics have been created for {meta.label} yet.
-          </p>
-        )}
+          )}
+          renderSubtopicActions={(item, child) => (
+            <button
+              type="button"
+              onClick={(event) => deleteSubtopic(item, child.id, event)}
+              className={`mr-1 flex size-6 shrink-0 items-center justify-center rounded transition-opacity hover:bg-red-500/10 focus-visible:opacity-100 group-hover/item:opacity-100 ${REVEAL} ${FOCUS}`}
+              title={`Delete subtopic ${child.title}`}
+              aria-label={`Delete subtopic ${child.title}`}
+            >
+              <Trash2 className={`size-3 ${DANGER}`} />
+            </button>
+          )}
+          emptyMessage={`No topics have been created for ${meta.label} yet.`}
+        />
       </nav>
 
       <DocsSidebarFooter folderId={folderId} editable />
@@ -869,7 +756,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
 
   return (
     <div
-      className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden border font-sans max-md:border-0 md:rounded-[10px] ${PAPER} ${LINE} ${INK} shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-[#f0ecf8] dark:selection:bg-[#30283f]`}
+      className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden border font-sans max-md:border-0 md:rounded-[10px] ${PAPER} ${LINE} ${INK} shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-docs-active`}
     >
       <DocsMobileHeader
         title={meta.label}
@@ -893,7 +780,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
             <div className={`mb-6 flex flex-wrap items-center gap-2 text-[11px] font-medium md:mb-7 ${MUTED}`}>
               <Link
                 to="/notes"
-                className={`transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${FOCUS}`}
+                className={`transition-colors hover:text-docs-ink ${FOCUS}`}
               >
                 <Home className="size-3.5" />
               </Link>
@@ -906,7 +793,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
 
               <button
                 type="button"
-                className={`transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${FOCUS}`}
+                className={`transition-colors hover:text-docs-ink ${FOCUS}`}
                 onClick={() => {
                   if (topic) select(topic, topic.subtopics[0])
                 }}
@@ -936,7 +823,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                     onClick={() => setModal('content')}
                     disabled={!subtopic}
                     title="Add content"
-                    className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors hover:border-[#6950a8] disabled:cursor-not-allowed disabled:opacity-45 dark:hover:border-[#c1a5ef] ${ACTIVE} ${ACCENT} ${LINE} ${FOCUS}`}
+                    className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors hover:border-docs-accent disabled:cursor-not-allowed disabled:opacity-45 ${ACTIVE} ${ACCENT} ${LINE} ${FOCUS}`}
                   >
                     <Plus className="size-3.5" /> Add content
                   </button>
@@ -1023,10 +910,10 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                   <button
                     type="button"
                     onClick={() => select(prevSubtopic.topic, prevSubtopic.subtopic)}
-                    className={`group flex min-w-0 flex-col items-start rounded-lg border p-4 text-left transition-all hover:border-[#6950a8] dark:hover:border-[#c1a5ef] ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
+                    className={`group flex min-w-0 flex-col items-start rounded-lg border p-4 text-left transition-all hover:border-docs-accent ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
                   >
                     <div
-                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-[#6950a8] dark:group-hover:text-[#c1a5ef] ${MUTED}`}
+                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-docs-accent ${MUTED}`}
                     >
                       <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-1" />
                       <span>Previous</span>
@@ -1044,10 +931,10 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                   <button
                     type="button"
                     onClick={() => select(nextSubtopic.topic, nextSubtopic.subtopic)}
-                    className={`group flex min-w-0 flex-col items-end rounded-lg border p-4 text-right transition-all hover:border-[#6950a8] dark:hover:border-[#c1a5ef] ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
+                    className={`group flex min-w-0 flex-col items-end rounded-lg border p-4 text-right transition-all hover:border-docs-accent ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
                   >
                     <div
-                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-[#6950a8] dark:group-hover:text-[#c1a5ef] ${MUTED}`}
+                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-docs-accent ${MUTED}`}
                     >
                       <span>Next</span>
                       <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
@@ -1086,12 +973,12 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                       type="button"
                       onClick={() => scrollTo(item.id)}
                       aria-current={isActive ? 'location' : undefined}
-                      className={`relative flex w-full min-w-0 items-center bg-transparent px-3 py-2 text-left text-[11px] leading-relaxed transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${FOCUS} ${
+                      className={`relative flex w-full min-w-0 items-center bg-transparent px-3 py-2 text-left text-[11px] leading-relaxed transition-colors hover:text-docs-ink ${FOCUS} ${
                         isActive ? `font-medium ${INK}` : MUTED
                       }`}
                     >
                       {isActive && (
-                        <span className="absolute -left-px top-0 h-full w-px bg-[#6950a8] dark:bg-[#c1a5ef]" />
+                        <span className="absolute -left-px top-0 h-full w-px bg-docs-accent" />
                       )}
                       <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{item.title}</span>
                     </button>
@@ -1111,7 +998,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-[#171020]/40 md:hidden"
+          className="fixed inset-0 z-30 bg-docs-backdrop/40 md:hidden"
           onClick={() => setMobileOpen(false)}
           aria-label="Close navigation overlay"
         />
@@ -1131,14 +1018,14 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder={`Search ${meta.label} docs...`}
-                className={`flex-1 bg-transparent text-sm outline-none placeholder:text-[#716d79] dark:placeholder:text-[#aaa4b5] ${INK}`}
+                className={`flex-1 bg-transparent text-sm outline-none placeholder:text-docs-muted ${INK}`}
               />
 
               <button
                 type="button"
                 onClick={() => setSearchOpen(false)}
                 aria-label="Close search"
-                className={`rounded-md p-1 transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                className={`rounded-md p-1 transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
               >
                 <X className="size-4" />
               </button>
@@ -1186,7 +1073,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                       </div>
 
                       <ChevronRight
-                        className={`ml-2 size-4 shrink-0 transition-colors group-hover:text-[#6950a8] dark:group-hover:text-[#c1a5ef] ${MUTED}`}
+                        className={`ml-2 size-4 shrink-0 transition-colors group-hover:text-docs-accent ${MUTED}`}
                       />
                     </button>
                   ))}
@@ -1222,7 +1109,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
               <button
                 type="button"
                 onClick={() => setDeleteModal(null)}
-                className={`rounded-lg p-1.5 transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                className={`rounded-lg p-1.5 transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
                 aria-label="Close delete confirmation"
               >
                 <X className="size-4" />
@@ -1252,7 +1139,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
               <button
                 type="button"
                 onClick={() => setDeleteModal(null)}
-                className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
               >
                 Cancel
               </button>
@@ -1283,7 +1170,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 type="button"
                 onClick={resetModal}
                 aria-label="Close"
-                className={`rounded-lg p-1.5 transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                className={`rounded-lg p-1.5 transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
               >
                 <X className="size-4" />
               </button>
@@ -1326,7 +1213,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                           aria-pressed={contentType === value}
                           className={`flex items-center justify-center gap-2 rounded-md border p-2.5 text-xs font-semibold transition-all ${FOCUS} ${
                             contentType === value
-                              ? `border-[#6950a8] ring-2 ring-[#6950a8]/20 dark:border-[#c1a5ef] dark:ring-[#c1a5ef]/20 ${ACTIVE} ${ACCENT}`
+                              ? `border-docs-accent ring-2 ring-docs-accent/20 ${ACTIVE} ${ACCENT}`
                               : `${LINE} ${SOFT} ${MUTED} ${HOVER_ACTIVE}`
                           }`}
                         >
@@ -1359,7 +1246,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 <button
                   type="button"
                   onClick={resetModal}
-                  className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                  className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
                 >
                   Cancel
                 </button>
