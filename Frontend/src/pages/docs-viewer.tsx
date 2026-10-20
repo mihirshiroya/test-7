@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen'
 import { DocsNavTree } from '../components/Ui/docs-nav-tree'
+import { DocsEmptyState } from '../components/Ui/docs-empty-set'
 import { INITIAL_DOCS, type Doc, type Topic, type Subtopic } from '../lib/docs-data'
 import { fetchDoc, selectDoc, selectDocStatus, selectFolders } from '../store/slices/notesSlice'
 import {
@@ -433,25 +434,12 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center p-12 text-center">
-                <div className="mb-4 flex size-14 items-center justify-center rounded-lg bg-docs-active text-docs-accent">
-                  <FileText className="size-7" />
-                </div>
-
-                <h3 className={`text-lg font-bold ${INK}`}>No content in this section</h3>
-
-                <p className={`mt-1 max-w-sm text-sm ${MUTED}`}>
-                  This section is empty. Open the editor to add content.
-                </p>
-
-                <Link
-                  to={`/notes/${folderId}/edit`}
-                  className={`mt-5 inline-flex items-center gap-2 rounded-md bg-docs-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-docs-primary-hover ${FOCUS}`}
-                >
-                  <Pencil className="size-4" />
-                  Open Editor
-                </Link>
-              </div>
+              <DocsEmptyState
+                variant="content"
+                title="No content in this section"
+                description="This section is empty."
+           
+              />
             )}
 
             {/* PREVIOUS / NEXT */}
@@ -531,7 +519,12 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
                 })}
               </nav>
             ) : (
-              <p className={`px-2.5 py-3 text-xs ${MUTED}`}>No sections in this subtopic.</p>
+              <DocsEmptyState
+                variant="sections"
+                size="sm"
+                title="No sections yet"
+                description="Sections will appear here once content is added."
+              />
             )}
           </div>
         </aside>
@@ -616,13 +609,19 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
                   ))}
                 </div>
               ) : searchQuery.trim() ? (
-                <div className={`py-8 text-center text-sm ${MUTED}`}>
-                  No results for &ldquo;{searchQuery}&rdquo;
-                </div>
+                <DocsEmptyState
+                  variant="noResults"
+                  size="sm"
+                  title={<>No results for &ldquo;{searchQuery}&rdquo;</>}
+                  description="Try a different keyword or check the spelling."
+                />
               ) : (
-                <div className={`py-6 text-center text-xs ${MUTED}`}>
-                  Type to search through {folderName} documentation.
-                </div>
+                <DocsEmptyState
+                  variant="search"
+                  size="sm"
+                  title="Search the docs"
+                  description={`Type to search through ${folderName} documentation.`}
+                />
               )}
             </div>
           </div>

@@ -35,12 +35,12 @@ export function DayCell({
       <div className="flex items-center justify-between">
         <span
           className={cn(
-            "flex size-6 items-center justify-center rounded-full text-xs font-medium tabular-nums",
+            "flex size-6 items-center justify-center rounded-full text-xs font-medium font-inter!",
             today
               ? "bg-primary text-primary-foreground"
               : inMonth
                 ? "text-foreground"
-                : "text-muted-foreground/50",
+                : "text-slate-600/60",
           )}
         >
           {format(date, "d")}

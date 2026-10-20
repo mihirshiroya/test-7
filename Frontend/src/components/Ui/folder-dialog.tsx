@@ -105,7 +105,7 @@ export function FolderDialog({
 
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ink">
+            <h2 className="text-lg font-semibold text-ink font-inter!">
               {mode === 'create' ? 'New folder' : 'Rename folder'}
             </h2>
 
@@ -130,7 +130,7 @@ export function FolderDialog({
 
         <label
           htmlFor="folder-title"
-          className="mb-1.5 block text-sm font-medium text-charcoal"
+          className="mb-1.5 block text-sm font-medium text-charcoal font-inter!"
         >
           Folder name
         </label>
@@ -154,7 +154,7 @@ export function FolderDialog({
 
         {/* COLOR */}
 
-        <p className="mt-5 mb-2 text-sm font-medium text-charcoal">
+        <p className="mt-5 mb-2 text-sm font-medium text-charcoal font-inter!">
           Color
         </p>
 
@@ -191,7 +191,7 @@ export function FolderDialog({
 
         {/* ICON */}
 
-        <p className="mt-5 mb-2 text-sm font-medium text-charcoal">
+        <p className="mt-5 mb-2 text-sm font-medium text-charcoal font-inter!">
           Icon
         </p>
 
@@ -209,7 +209,7 @@ export function FolderDialog({
                   aria-pressed={selected}
                   onClick={() => setIcon(key)}
                   className={cn(
-                    'flex size-10 items-center justify-center border transition-colors',
+                    'flex size-10 items-center justify-center border border-soft transition-colors',
                     selected
                       ? 'text-primary'
                       : 'text-steel hover:bg-gray-tint hover:text-ink',
@@ -220,7 +220,7 @@ export function FolderDialog({
                       : 'transparent',
                     borderColor: selected
                       ? FOLDER_TINTS[tint].fg
-                      : 'var(--soft)',
+                      : '',
                   }}
                 >
                   <Icon className="size-5" />
@@ -234,9 +234,9 @@ export function FolderDialog({
 
         <div className="mt-7 flex justify-end gap-2">
           <Button
-            variant="outline"
             size="lg"
             onClick={onClose}
+            className="bg-background border border-soft font-inter! text-steel"
           >
             Cancel
           </Button>
@@ -245,7 +245,7 @@ export function FolderDialog({
             size="lg"
             disabled={!canSubmit}
             onClick={submit}
-            className="bg-primary text-on-primary hover:bg-primary-pressed"
+            className="bg-primary text-on-primary hover:bg-primary-pressed font-inter!"
           >
             {mode === 'create'
               ? 'Create folder'

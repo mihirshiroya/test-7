@@ -53,22 +53,22 @@ export function MobileAgenda({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto border border-soft">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto border border-soft">
       {daysWithTasks.map(({ day, tasks }) => (
-        <div key={day.toISOString()} className="flex flex-col gap-2 mt-4">
-          <div className="flex items-center gap-2 px-1">
+        <div key={day.toISOString()} className="flex flex-col">
+          <div className="flex items-center gap-2 px-2 py-2 bg-canvas font-inter!">
             <span
               className={cn(
-                "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums",
+                "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums",
                 isToday(day) ? "bg-primary text-primary-foreground" : "text-foreground"
               )}
             >
-              {format(day, "d")}
+              {format(day, "d")}.
             </span>
-            <span className="text-sm font-medium text-foreground">{format(day, "EEEE")}</span>
-            <span className="text-xs text-muted-foreground">{format(day, "MMM d")}</span>
+            <span className="text-sm font-semibold text-foreground">{format(day, "EEEE")}</span>
+           
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 bg-background">
             {tasks.map((task) => {
               const range = getTaskTimeRange(task)
               const workspace = getWorkspaceVisual(workspaceMap.get(task.workspaceId))
@@ -87,14 +87,14 @@ export function MobileAgenda({
                   )}
                 >
                   <span
-                    className="size-2 shrink-0 rounded-full"
+                    className="size-2 shrink-0"
                     style={workspace.dotStyle}
                     aria-hidden="true"
                   />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span
                       className={cn(
-                        "truncate text-sm font-medium text-foreground",
+                        "truncate text-sm font-medium text-foreground font-inter!",
                         isOnHold && "line-through"
                       )}
                     >

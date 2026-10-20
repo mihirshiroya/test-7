@@ -105,7 +105,7 @@ export function FolderCard({
         onClick={goToNotes}
         className="mt-4 text-left"
       >
-        <h3 className="truncate text-heading-5 font-semibold text-ink">
+        <h3 className="truncate text-heading-5 font-semibold capitalize text-ink">
           {folder.title}
         </h3>
       </button>

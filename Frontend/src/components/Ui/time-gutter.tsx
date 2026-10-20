@@ -17,7 +17,7 @@ export function TimeGutter() {
       {hours.map((h) => (
         <div key={h} className="relative" style={{ height: HOUR_HEIGHT }}>
           {h !== 0 && (
-            <span className="absolute -top-2 right-1.5 text-[10px] font-medium text-muted-foreground sm:right-2 sm:text-[11px]">
+            <span className="absolute -top-2 right-1.5 text-[10px] font-inter! font-medium text-steel sm:right-2 sm:text-[11px]">
               {format(new Date(2000, 0, 1, h), "h a")}
             </span>
           )}

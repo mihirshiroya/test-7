@@ -32,11 +32,11 @@ export function MonthGrid({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden border border-soft bg-card">
-      <div className="grid grid-cols-7 border-b border-soft bg-muted/40">
+      <div className="grid grid-cols-7 border-b border-soft bg-canvas">
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="px-2 py-2 text-center text-xs font-medium text-muted-foreground sm:text-left sm:px-3"
+            className="px-2 py-2 font-inter! text-center text-sm font-bold text-muted-foreground sm:text-left sm:px-3"
           >
             <span className="sm:hidden">{label[0]}</span>
             <span className="hidden sm:inline">{label}</span>

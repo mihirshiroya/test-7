@@ -32,11 +32,11 @@ export function CalendarHeader({
   onToday: () => void
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
       <div className="flex items-center gap-3">
 
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-balance text-foreground sm:text-xl">
+          <h1 className="shrink-0 text-heading-3 text-primary text-balance !font-inter">
             {title}
           </h1>
         </div>
@@ -45,7 +45,7 @@ export function CalendarHeader({
       <div className="flex flex-wrap items-center gap-2">
       <DropdownMenu>
   <DropdownMenuTrigger
-    className="inline-flex h-9 shrink-0 items-center gap-2 border border-soft bg-card/60 px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    className="inline-flex font-inter! h-9 shrink-0 items-center gap-2 border border-soft bg-card/60 px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
   >
     <span>
       {view === "month"
@@ -71,15 +71,15 @@ export function CalendarHeader({
         }
       }}
     >
-      <DropdownMenuRadioItem value="month" className="text-xs">
+      <DropdownMenuRadioItem value="month" className="text-xs font-inter!">
         Month
       </DropdownMenuRadioItem>
 
-      <DropdownMenuRadioItem value="week" className="text-xs">
+      <DropdownMenuRadioItem value="week" className="text-xs font-inter!">
         Week
       </DropdownMenuRadioItem>
 
-      <DropdownMenuRadioItem value="day" className="text-xs">
+      <DropdownMenuRadioItem value="day" className="text-xs font-inter!">
         Day
       </DropdownMenuRadioItem>
     </DropdownMenuRadioGroup>
@@ -98,7 +98,7 @@ export function CalendarHeader({
           <button
             type="button"
             onClick={onToday}
-            className="h-8 border-x border-soft px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            className="h-8 border-x font-inter! border-soft px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
           >
             Today
           </button>

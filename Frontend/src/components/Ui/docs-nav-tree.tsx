@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import type { Subtopic, Topic } from '../../lib/docs-data'
+import { DocsEmptyState } from './docs-empty-set'
 
 const MUTED = 'text-docs-muted'
 const LINE_BG = 'border-docs-line-strong'
@@ -30,7 +31,7 @@ export function DocsNavTree({
 }: DocsNavTreeProps) {
   if (topics.length === 0) {
     return emptyMessage ? (
-      <p className={`px-2 py-4 text-xs ${MUTED}`}>{emptyMessage}</p>
+      <DocsEmptyState variant="topics" size="sm" title="No topics yet" description={emptyMessage} />
     ) : null
   }
 

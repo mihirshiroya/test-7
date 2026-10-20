@@ -35,13 +35,13 @@ export function WeekView({
         <div className="min-w-[632px]">
           <div className="sticky top-0 z-20 flex border-b border-soft bg-muted/95 backdrop-blur-sm">
             <div className="w-12 shrink-0 border-r border-soft sm:w-16" />
-            <div className="grid flex-1 grid-cols-7">
+            <div className="grid flex-1 grid-cols-7 bg-canvas">
               {days.map((day) => (
                 <div
                   key={day.toISOString()}
                   className="flex flex-col items-center gap-0.5 border-r border-soft px-1 py-2 last:border-r-0"
                 >
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-secondary font-inter!">
                     {format(day, "EEE")}
                   </span>
                   <span

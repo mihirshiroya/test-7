@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen.tsx'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { DocsNavTree } from '../components/Ui/docs-nav-tree'
+import { DocsEmptyState } from '../components/Ui/docs-empty-set.tsx'
 import {
   ChevronRight,
   FileText,
@@ -38,7 +39,6 @@ const PAPER = 'bg-docs-paper'
 const SOFT = 'bg-docs-soft'
 const ACTIVE = 'bg-docs-active'
 const ACCENT = 'text-docs-accent'
-const HOVER_SOFT = 'hover:bg-docs-soft'
 const HOVER_ACTIVE = 'hover:bg-docs-active'
 const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-docs-accent'
@@ -756,7 +756,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
 
   return (
     <div
-      className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden border font-sans max-md:border-0 md:rounded-[10px] ${PAPER} ${LINE} ${INK} shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-docs-active`}
+      className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-docs-active`}
     >
       <DocsMobileHeader
         title={meta.label}
@@ -773,11 +773,11 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
         <main
           ref={mainScrollRef}
           onScroll={handleMainScroll}
-          className={`min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain ${PAPER}`}
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar bg-background"
         >
-          <div className="mx-auto w-full max-w-[800px] px-6 pb-12 pt-6 md:px-12 md:pb-16 md:pt-8 min-[1100px]:px-16 min-[1100px]:pt-9">
+          <div className="mx-auto w-full max-w-[900px] px-6 pb-12 pt-6 md:px-12 md:pb-16 md:pt-8 min-[1100px]:px-16 min-[1100px]:pt-9">
             {/* Breadcrumbs */}
-            <div className={`mb-6 flex flex-wrap items-center gap-2 text-[11px] font-medium md:mb-7 ${MUTED}`}>
+            <div className={`mb-6 flex flex-wrap items-center gap-2 text-[11px] font-medium md:mb-7 font-inter! ${MUTED}`}>
               <Link
                 to="/notes"
                 className={`transition-colors hover:text-docs-ink ${FOCUS}`}
@@ -785,11 +785,11 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 <Home className="size-3.5" />
               </Link>
 
-              <ChevronRight className="size-3.5 opacity-60" />
+              <ChevronRight className="size-3.5" />
 
               <span>{meta.label}</span>
 
-              <ChevronRight className="size-3.5 opacity-60" />
+              <ChevronRight className="size-3.5" />
 
               <button
                 type="button"
@@ -801,9 +801,9 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 {topic?.title ?? 'General'}
               </button>
 
-              <ChevronRight className="size-3.5 opacity-60" />
+              <ChevronRight className="size-3.5" />
 
-              <span className={`px-2 py-0.5 font-semibold ${INK}`}>
+              <span className={`font-semibold ${INK}`}>
                 {subtopic?.title ?? 'Overview'}
               </span>
             </div>
@@ -812,7 +812,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
             <div className="mb-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1
-                  className={`text-[clamp(26px,2.5vw,34px)] font-semibold leading-tight tracking-[-0.04em] [overflow-wrap:anywhere] ${INK}`}
+                  className={`text-[clamp(26px,2.5vw,34px)] font-semibold leading-tight font-inter! capitalize [overflow-wrap:anywhere] ${INK}`}
                 >
                   {subtopic?.title ?? 'Select a subtopic'}
                 </h1>
@@ -823,7 +823,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                     onClick={() => setModal('content')}
                     disabled={!subtopic}
                     title="Add content"
-                    className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors hover:border-docs-accent disabled:cursor-not-allowed disabled:opacity-45 ${ACTIVE} ${ACCENT} ${LINE} ${FOCUS}`}
+                    className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border px-2.5 py-2 text-[11px] font-medium transition-colors hover:border-docs-accent disabled:cursor-not-allowed disabled:opacity-45 ${ACTIVE} ${ACCENT} ${LINE} ${FOCUS}`}
                   >
                     <Plus className="size-3.5" /> Add content
                   </button>
@@ -846,9 +846,9 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                     key={item.id}
                     className="group relative scroll-mt-6"
                   >
-                    <div className="mb-4 flex items-center justify-between pb-1">
+                    <div className="mb-4 flex items-center justify-between">
                       <h2
-                        className={`text-[18px] font-semibold leading-normal tracking-[-0.025em] [overflow-wrap:anywhere] ${INK}`}
+                        className={`text-[18px] font-bold leading-normal capitalize [overflow-wrap:anywhere] ${INK}`}
                       >
                         {item.title}
                       </h2>
@@ -866,41 +866,25 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
 
                     {item.type === 'code' ? (
                       <DocsCodeBlock
-                        label={`${item.title.toLowerCase().replace(/\s+/g, '-')}.${item.language && !looksLikeGeneratedId(item.language) ? item.language : languageKey}`}
+                        label={item.language && !looksLikeGeneratedId(item.language) ? item.language : languageKey}
                         content={item.content}
                         copied={copiedId === item.id}
                         onCopy={() => void handleCopy(item.content, item.id)}
                       />
                     ) : (
-                      <div className={`max-w-none text-[14px] leading-[1.9] [overflow-wrap:anywhere] ${MUTED}`}>
-                        <p className="whitespace-pre-wrap">{item.content}</p>
+                      <div className={`text-[14px] leading-[1.9] [overflow-wrap:anywhere] ${MUTED}`}>
+                        <p className="whitespace-pre-wrap font-semibold text-steel font-inter! text-pretty">{item.content}</p>
                       </div>
                     )}
                   </section>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center p-12 text-center">
-                <div className={`mb-4 flex size-14 items-center justify-center rounded-lg ${ACTIVE} ${ACCENT}`}>
-                  <FileText className="size-7" />
-                </div>
-
-                <h3 className={`text-lg font-bold ${INK}`}>No content in this section yet</h3>
-
-                <p className={`mt-1 max-w-sm text-sm ${MUTED}`}>
-                  Start documenting by adding a text explanation or code snippet block.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setModal('content')}
-                  disabled={!subtopic}
-                  className={`mt-5 inline-flex cursor-pointer items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold ${PRIMARY_BTN} ${FOCUS}`}
-                >
-                  <Plus className="size-4" />
-                  <span>Create Content Block</span>
-                </button>
-              </div>
+              <DocsEmptyState
+                variant="content"
+                title="No content in this section yet"
+                description="Start documenting by adding a text explanation or code snippet block."
+              />
             )}
 
             {/* Prev / Next */}
@@ -910,16 +894,14 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                   <button
                     type="button"
                     onClick={() => select(prevSubtopic.topic, prevSubtopic.subtopic)}
-                    className={`group flex min-w-0 flex-col items-start rounded-lg border p-4 text-left transition-all hover:border-docs-accent ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
+                    className={`flex min-w-0 flex-col items-start border bg-docs-paper p-4 text-left transition-colors hover:border-docs-accent hover:bg-docs-soft ${LINE} ${FOCUS}`}
                   >
-                    <div
-                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-docs-accent ${MUTED}`}
-                    >
-                      <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-1" />
-                      <span>Previous</span>
+                    <div className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide ${MUTED}`}>
+                      <ArrowLeft className="size-3.5" />
+                      Previous
                     </div>
 
-                    <div className={`mt-1 w-full truncate text-sm ${MUTED}`}>
+                    <div className={`mt-1 max-w-full truncate text-md ${MUTED}`}>
                       {prevSubtopic.subtopic.title}
                     </div>
                   </button>
@@ -931,16 +913,14 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                   <button
                     type="button"
                     onClick={() => select(nextSubtopic.topic, nextSubtopic.subtopic)}
-                    className={`group flex min-w-0 flex-col items-end rounded-lg border p-4 text-right transition-all hover:border-docs-accent ${PAPER} ${HOVER_SOFT} ${LINE} ${FOCUS}`}
+                    className={`flex min-w-0 flex-col items-end border bg-docs-paper p-4 text-right transition-colors hover:border-docs-accent hover:bg-docs-soft ${LINE} ${FOCUS}`}
                   >
-                    <div
-                      className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide transition-colors group-hover:text-docs-accent ${MUTED}`}
-                    >
-                      <span>Next</span>
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                    <div className={`flex items-center gap-1.5 text-[10px] font-medium tracking-wide ${MUTED}`}>
+                      Next
+                      <ArrowRight className="size-3.5" />
                     </div>
 
-                    <div className={`mt-1 w-full truncate text-right text-sm ${MUTED}`}>
+                    <div className={`mt-1 max-w-full truncate text-md ${MUTED}`}>
                       {nextSubtopic.subtopic.title}
                     </div>
                   </button>
@@ -958,12 +938,12 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
           className="hidden w-[200px] shrink-0 overflow-y-auto py-9 pl-0 pr-6 min-[1100px]:block"
         >
           <div>
-            <h2 className={`mb-[18px] flex items-center gap-[7px] text-[11px] font-normal ${MUTED}`}>
+            <h2 className={`mb-[18px] flex items-center gap-[7px] text-[13px] font-semibold ${MUTED}`}>
               <FileText size={13} /> On this page
             </h2>
 
             {toc.length > 0 ? (
-              <nav className={`w-full border-l ${LINE}`}>
+              <nav className={`border-l ${LINE} ml-1`}>
                 {toc.map((item) => {
                   const isActive = activeTocId === item.id
 
@@ -973,22 +953,25 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                       type="button"
                       onClick={() => scrollTo(item.id)}
                       aria-current={isActive ? 'location' : undefined}
-                      className={`relative flex w-full min-w-0 items-center bg-transparent px-3 py-2 text-left text-[11px] leading-relaxed transition-colors hover:text-docs-ink ${FOCUS} ${
-                        isActive ? `font-medium ${INK}` : MUTED
+                      className={`relative flex w-full items-center bg-transparent px-3 py-2 text-left text-[11px] leading-relaxed transition-colors hover:text-docs-ink ${FOCUS} ${
+                        isActive ? `font-bold ${INK}` : MUTED
                       }`}
                     >
                       {isActive && (
-                        <span className="absolute -left-px top-0 h-full w-px bg-docs-accent" />
+                        <span className="absolute -left-[2px] top-0 h-full w-[2px] bg-docs-accent rounded-2xl" />
                       )}
-                      <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{item.title}</span>
+                      <span className="[overflow-wrap:anywhere] font-inter! capitalize">{item.title}</span>
                     </button>
                   )
                 })}
               </nav>
             ) : (
-              <div className="px-2.5 py-3">
-                <p className={`text-xs ${MUTED}`}>No sections in this subtopic.</p>
-              </div>
+              <DocsEmptyState
+                variant="sections"
+                size="sm"
+                title="No sections yet"
+                description="Add a content block to build this outline."
+              />
             )}
           </div>
         </aside>
@@ -1008,7 +991,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       {searchOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 backdrop-blur-xs animate-in fade-in duration-150">
           <div
-            className={`w-full max-w-xl overflow-hidden rounded-[10px] border shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
+            className={`w-full max-w-xl overflow-hidden border shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
           >
             <div className={`flex items-center border-b px-4 py-3 ${SOFT} ${LINE}`}>
               <Search className={`mr-3 size-5 ${MUTED}`} />
@@ -1048,7 +1031,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                         setSearchOpen(false)
                         setSearchQuery('')
                       }}
-                      className={`group flex w-full items-center justify-between rounded-md p-3 text-left transition-colors ${HOVER_ACTIVE} ${FOCUS}`}
+                      className={`group flex w-full items-center justify-between p-3 text-left transition-colors ${HOVER_ACTIVE} ${FOCUS}`}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -1079,13 +1062,19 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                   ))}
                 </div>
               ) : searchQuery.trim() ? (
-                <div className={`py-8 text-center text-sm ${MUTED}`}>
-                  No results for &ldquo;{searchQuery}&rdquo; in {meta.label} docs.
-                </div>
+                <DocsEmptyState
+                  variant="noResults"
+                  size="sm"
+                  title={<>No results for &ldquo;{searchQuery}&rdquo;</>}
+                  description={`Nothing matched in ${meta.label} docs. Try a different keyword.`}
+                />
               ) : (
-                <div className={`py-6 text-center text-xs ${MUTED}`}>
-                  Type to search through {meta.label} documentation.
-                </div>
+                <DocsEmptyState
+                  variant="search"
+                  size="sm"
+                  title="Search the docs"
+                  description={`Type to search through ${meta.label} documentation.`}
+                />
               )}
             </div>
           </div>
@@ -1101,7 +1090,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
           }}
         >
           <div
-            className={`w-full max-w-lg rounded-[10px] border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
+            className={`w-full max-w-lg border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
           >
             <div className={`flex items-center justify-between border-b pb-4 ${LINE}`}>
               <h2 className={`text-lg font-bold capitalize ${INK}`}>Delete {deleteModal.type}</h2>
@@ -1139,7 +1128,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
               <button
                 type="button"
                 onClick={() => setDeleteModal(null)}
-                className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                className={` px-4 py-2 text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
               >
                 Cancel
               </button>
@@ -1147,7 +1136,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
               <button
                 type="button"
                 onClick={confirmDelete}
-                className={`inline-flex items-center gap-2 rounded-md bg-red-600 px-5 py-2 text-xs font-semibold text-white shadow-md transition-colors hover:bg-red-500 ${FOCUS}`}
+                className={`inline-flex items-center gap-2  bg-red-600 px-5 py-2 text-xs font-semibold text-white shadow-md transition-colors hover:bg-red-500 ${FOCUS}`}
               >
                 <Trash2 className="size-3.5" />
                 Delete {deleteModal.type}
@@ -1161,10 +1150,10 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
           <div
-            className={`w-full max-w-lg rounded-[10px] border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
+            className={`w-full max-w-lg border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
           >
             <div className={`flex items-center justify-between border-b pb-4 ${LINE}`}>
-              <h2 className={`text-lg font-bold capitalize ${INK}`}>Create New {modal}</h2>
+              <h2 className={`text-lg font-bold capitalize font-inter! ${INK}`}>Create New {modal}</h2>
 
               <button
                 type="button"
@@ -1183,7 +1172,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                   autoFocus
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  className={`rounded-md ${FIELD} ${LINE} ${INK}`}
+                  className={`${FIELD} ${LINE} ${INK}`}
                   placeholder={
                     modal === 'topic'
                       ? `e.g., ${meta.label} Advanced Concepts`
@@ -1211,7 +1200,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                           type="button"
                           onClick={() => setContentType(value)}
                           aria-pressed={contentType === value}
-                          className={`flex items-center justify-center gap-2 rounded-md border p-2.5 text-xs font-semibold transition-all ${FOCUS} ${
+                          className={`flex items-center justify-center gap-2 border p-2.5 text-xs font-semibold transition-all ${FOCUS} ${
                             contentType === value
                               ? `border-docs-accent ring-2 ring-docs-accent/20 ${ACTIVE} ${ACCENT}`
                               : `${LINE} ${SOFT} ${MUTED} ${HOVER_ACTIVE}`
@@ -1231,7 +1220,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                       value={content}
                       onChange={(event) => setContent(event.target.value)}
                       rows={6}
-                      className={`resize-y rounded-md p-3 font-mono ${FIELD} ${LINE} ${INK}`}
+                      className={`resize-none p-3 font-mono ${FIELD} ${LINE} ${INK}`}
                       placeholder={
                         contentType === 'code'
                           ? codePlaceholder
@@ -1246,7 +1235,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 <button
                   type="button"
                   onClick={resetModal}
-                  className={`rounded-md px-4 py-2 text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
+                  className={`px-4 py-2 font-inter! text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
                 >
                   Cancel
                 </button>
@@ -1254,7 +1243,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 <button
                   type="submit"
                   disabled={!title.trim() || (modal === 'content' && !content.trim())}
-                  className={`cursor-pointer rounded-md px-5 py-2 text-xs font-semibold ${PRIMARY_BTN} ${FOCUS}`}
+                  className={`cursor-pointer font-inter! px-5 py-2 text-xs font-semibold ${PRIMARY_BTN} ${FOCUS}`}
                 >
                   Create {modal}
                 </button>
