@@ -90,11 +90,11 @@ export const STATUS_META: Record<
   TaskStatus,
   { title: string; accent: string; tint: string }
 > = {
-  TODO: {
-    title: "To Do",
-    accent: "var(--color-muted-foreground)",
-    tint: "var(--color-muted)",
-  },
+ TODO: {
+  title: "To Do",
+  accent: "var(--color-text-secondary)",
+  tint: "var(--color-surface-soft)",
+},
   IN_PROGRESS: {
     title: "In Progress",
     accent: "var(--color-primary)",

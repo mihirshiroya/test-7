@@ -46,7 +46,7 @@ export function SessionGantt({
 }: SessionGanttProps) {
   if (!sessions.length) {
     return (
-      <Empty className="min-h-40 rounded-md px-4 py-5">
+      <Empty className="min-h-40 px-4 py-5">
         <EmptyHeader>
           <ThemedSvg
             raw={noResultsRaw}
@@ -186,7 +186,7 @@ export function SessionGantt({
 
                 {/* Task title */}
                 <span
-                  className="min-w-0 truncate text-xs font-medium text-foreground"
+                  className="min-w-0 truncate text-sm capitalize tracking-wide font-medium text-foreground"
                   title={name}
                 >
                   {name}
@@ -239,7 +239,7 @@ export function SessionGantt({
                     font-mono
                     text-[10px]
                     tabular-nums
-                    text-muted-foreground
+                    text-steel font-inter! font-semibold
                   "
                   style={{ left: `${left}px` }}
                 >
@@ -338,7 +338,7 @@ export function SessionGantt({
                             whitespace-nowrap
                             font-mono
                             text-[10px]
-                            font-semibold
+                            font-bold
                             tabular-nums
                             text-primary
                           "

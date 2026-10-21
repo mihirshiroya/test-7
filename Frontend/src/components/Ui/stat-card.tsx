@@ -86,7 +86,7 @@ export function StatCard({
       <div className="relative z-10 flex items-center justify-between gap-3">
         <span
           className="
-            text-xl font-medium
+            text-xl 
             transition-colors
             group-hover:text-foreground font-semibold
           "

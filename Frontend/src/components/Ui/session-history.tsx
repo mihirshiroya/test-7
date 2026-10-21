@@ -23,6 +23,17 @@ import { selectTimer } from "../../store/slices/taskSlice"
 const DEFAULT_GOAL_SECONDS = 4 * 60 * 60
 const LIVE_REFRESH_MS = 30_000
 
+
+function formatGoalTime(seconds: number) {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = Math.floor(seconds % 60)
+
+  return [hours, minutes, remainingSeconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":")
+}
+
 export function SessionHistory() {
   const dispatch = useAppDispatch()
   const { data: day, status, error, selectedDate } = useAppSelector(selectSessions)
@@ -161,30 +172,19 @@ export function SessionHistory() {
       {/* Header */}
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground text-balance">
+          <h1 className="text-3xl font-semibold tracking-tight font-inter! text-foreground text-balance">
             Session Log
           </h1>
         </div>
 
         {/* Date picker */}
         <div className="relative flex items-center gap-3 font-mono text-4xl font-semibold tabular-nums text-foreground">
-          <button
-            type="button"
-            onClick={() => dispatch(fetchSessions(selectedDate))}
-            disabled={status === "loading"}
-            aria-label="Refresh sessions"
-            className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-          >
-            <RefreshCw
-              className={cn("h-3.5 w-3.5", status === "loading" && "animate-spin")}
-              aria-hidden="true"
-            />
-          </button>
+          
 
           <button
             type="button"
             onClick={openDatePicker}
-            className="group flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+            className="group flex items-center gap-2 text-sm tracking-wide capitalize font-semibold font-inter! text-steel transition-colors hover:text-foreground"
             aria-label={`Select date. Current date is ${dateLabel}`}
           >
             <CalendarDays
@@ -260,54 +260,49 @@ export function SessionHistory() {
         />
       </div>
 
-      {/* Daily goal progress */}
-      <section className="mb-10 flex flex-col gap-6 border border-soft bg-card p-6">
-        <div>
-          <div className="mb-3 flex justify-between text-xs">
-            <span>Daily goal</span>
-            <span className="font-mono tabular-nums text-primary">
-              {formatDuration(totalSeconds)} / {formatDuration(goalSeconds)}
-            </span>
-          </div>
+      {/* Progress */}
+      {/* Progress */}
+<section className="mb-10 border border-soft bg-card p-6">
+  <div className="mb-4 flex items-center justify-between gap-4">
+    <h2 className="text-md font-semibold capitalize tracking-wider text-foreground">
+      Progress
+    </h2>
 
-          <div
-            className="flex gap-1"
-            role="progressbar"
-            aria-label="Daily goal progress"
-            aria-valuenow={Math.round(goalPercent)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            {Array.from({ length: 40 }, (_, index) => (
-              <span
-                key={index}
-                className={cn(
-                  "h-6 flex-1 border border-soft",
-                  index < Math.round(goalPercent / 2.5)
-                    ? "bg-primary"
-                    : "bg-slate-700/10"
-                )}
-              />
-            ))}
-          </div>
+    <span className="font-inter! font-semibold text-xs text-steel">
+      {formatGoalTime(totalSeconds)} / {formatGoalTime(goalSeconds)}
+    </span>
+  </div>
 
-          <div className="mt-3 flex justify-between font-mono text-[10px] text-muted-foreground">
-            <span>{Math.round(totalSeconds / 3600)} / {Math.round(goalSeconds / 3600)} HOURS</span>
-            <span>{goalPercent >= 100 ? "GOAL COMPLETE" : "KEEP GOING ↗"}</span>
-          </div>
-        </div>
-
-      
-      </section>
+  <div
+    className="flex gap-1"
+    role="progressbar"
+    aria-label="Daily goal progress"
+    aria-valuenow={Math.round(goalPercent)}
+    aria-valuemin={0}
+    aria-valuemax={100}
+  >
+    {Array.from({ length: 40 }, (_, index) => (
+      <span
+        key={index}
+        className={cn(
+          "h-6 flex-1 border border-soft",
+          index < Math.round(goalPercent / 2.5)
+            ? "bg-primary skew-x-12"
+            : "bg-slate-700/10"
+        )}
+      />
+    ))}
+  </div>
+</section>
 
       {/* Timeline chart panel */}
       <section className="mb-10 border border-soft bg-card p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+        <div className="mb-6 flex items-center justify-between mb-4">
+          <h2 className="text-md font-semibold capitalize tracking-wider text-foreground">
             Timeline
           </h2>
 
-          <span className="text-xs text-muted-foreground">
+          <span className="font-inter! font-semibold text-xs text-steel">
             Grouped by task
           </span>
         </div>
@@ -322,7 +317,7 @@ export function SessionHistory() {
       <div className="grid grid-cols-1 gap-4 lg:h-[500px] lg:grid-cols-2">
         {/* Sessions */}
         <section className="min-h-0 overflow-y-auto border border-soft bg-card p-6 no-scrollbar">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">
+          <h2 className="text-md font-semibold capitalize tracking-wider text-foreground mb-4">
             Sessions
           </h2>
 
@@ -343,7 +338,7 @@ export function SessionHistory() {
             </Empty>
           )}
 
-          <ol className="flex flex-col">
+          <ol className="flex flex-col space-y-2">
             {sessions.map(
               (session, index) => (
                 <SessionRow
@@ -366,7 +361,7 @@ export function SessionHistory() {
 
         {/* By task */}
         <section className="min-h-0 overflow-y-auto border border-soft bg-card p-6 no-scrollbar">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">
+          <h2 className="mb-4 text-md font-semibold capitalize tracking-wider text-foreground">
             By Task
           </h2>
 
@@ -416,10 +411,10 @@ export function SessionHistory() {
                       onMouseLeave={() => setActiveTask(null)}
                     >
                       <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 font-medium text-foreground">
+                        <span className="flex items-center font-inter! tracking-wide gap-2 font-semibold text-foreground">
                           {task.name}
                         </span>
-                        <span className="font-mono tabular-nums text-muted-foreground">
+                        <span className="font-inter! text-xs tabular-nums font-semibold text-steel">
                           {formatCompact(task.seconds)}
                         </span>
                       </div>
@@ -432,7 +427,7 @@ export function SessionHistory() {
                           }}
                         />
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-sm text-steel font-semibold font-inter!">
                         {task.count} {task.count === 1 ? "session" : "sessions"} · {percent}% of total
                       </span>
                     </li>
@@ -556,7 +551,7 @@ function TaskDonut({
         cy={DONUT_CENTER}
         r={DONUT_RADIUS}
         fill="none"
-        className="stroke-primary"
+        className="stroke-soft"
         strokeOpacity={0.15}
         strokeWidth={DONUT_STROKE}
       />
@@ -616,7 +611,7 @@ function TaskDonut({
           textAnchor="middle"
           fontSize={22}
           fontWeight={600}
-          className="fill-primary tabular-nums"
+          className="fill-slate-500 font-inter!"
         >
           {active
             ? `${activePercent}%`
@@ -631,7 +626,7 @@ function TaskDonut({
           textAnchor="middle"
           fontSize={10}
           fillOpacity={0.7}
-          className="fill-primary"
+          className="fill-slate-500 font-inter! text-sm font-semibold"
         >
           {active
             ? truncate(active.name, 20)
@@ -660,9 +655,11 @@ function StatCard({
   hint?: string
 }) {
   return (
-    <div className="animate-fadeIn border-2 border-soft bg-background p-5 transition-shadow hover:shadow-(--shadow-card)">
+    <div className="animate-fadeIn border border-soft bg-background p-5 transition-shadow hover:shadow-(--shadow-card)">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-lg text-secondary">
+        <span className="text-xl 
+            transition-colors
+            group-hover:text-foreground font-semibold">
           {label}
         </span>
 
@@ -722,17 +719,17 @@ function SessionRow({
       />
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate text-sm font-medium text-foreground">
+        <span className="truncate text-sm font-semibold text-foreground font-inter!">
           {session.taskName}
         </span>
 
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+        <span className="font-mono text-xs tabular-nums text-secondary">
           {formatClock(start)} —{" "}
           {formatClock(end)}
         </span>
       </div>
 
-      <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+      <span className="font-inter! text-xs font-semibold tabular-nums text-steel">
         {formatDuration(
           durationSeconds(session)
         )}

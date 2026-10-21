@@ -13,8 +13,8 @@ export const Progress: React.FC<TaskProgressProps> = ({ total, completed }) => {
         <div
           key={idx}
           className={cn(
-            "h-2 flex-1 transition-colors duration-300 border-2 border-soft",
-            idx < completed ? "bg-white" : "bg-surface-secondary"
+            "h-2 flex-1 transition-colors duration-300 border skew-x-20 border-soft",
+            idx < completed ? "bg-primary" : "bg-surface-secondary"
           )}
         />
       ))}

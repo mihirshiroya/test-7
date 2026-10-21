@@ -612,7 +612,7 @@ export function KanbanBoard({
 
       <div className="mb-5 flex w-full items-center gap-3">
         {title && (
-          <h2 className="shrink-0 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          <h2 className="shrink-0 text-xl font-inter! font-bold tracking-tight text-foreground sm:text-2xl">
             {title}
           </h2>
         )}
@@ -635,7 +635,7 @@ export function KanbanBoard({
               }
               placeholder="Search tasks..."
               aria-label="Search tasks"
-              className="h-10 w-full border border-soft bg-card pl-9 pr-10 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full border font-inter! border-soft bg-card pl-9 pr-10 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
 
             {searchQuery && (
@@ -658,7 +658,7 @@ export function KanbanBoard({
           {/* Period Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="inline-flex h-10 shrink-0 items-center gap-2 border border-soft bg-card/60 px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex h-10 shrink-0 font-inter! items-center gap-2 border border-soft bg-card/60 px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Change task period"
             >
               <span>
@@ -690,21 +690,21 @@ export function KanbanBoard({
               >
                 <DropdownMenuRadioItem
                   value="month"
-                  className="text-xs"
+                  className="text-xs font-inter!"
                 >
                   Month
                 </DropdownMenuRadioItem>
 
                 <DropdownMenuRadioItem
                   value="week"
-                  className="text-xs"
+                  className="text-xs font-inter!"
                 >
                   Week
                 </DropdownMenuRadioItem>
 
                 <DropdownMenuRadioItem
                   value="day"
-                  className="text-xs"
+                  className="text-xs font-inter!"
                 >
                   Day
                 </DropdownMenuRadioItem>
@@ -912,22 +912,22 @@ const KanbanColumn = memo(
       >
         {/* Column header */}
         <div
-          className="flex shrink-0 items-center justify-between border-l-[3px] bg-muted/40 px-3 py-2"
-          style={{
-            borderColor:
-              meta.accent,
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-foreground">
-              {meta.title}
-            </span>
-          </div>
+  className="flex shrink-0 items-center justify-between border-l-[3px] px-3 py-2"
+  style={{
+    borderColor: meta.accent,
+    backgroundColor: `color-mix(in srgb, ${meta.accent} 12%, transparent)`,
+  }}
+>
+  <div className="flex items-center gap-2">
+    <span className="text-sm font-semibold text-foreground">
+      {meta.title}
+    </span>
+  </div>
 
-          <span className="ml-auto rounded-full bg-card px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-            {tasks.length}
-          </span>
-        </div>
+  <span className="ml-auto rounded-full bg-card px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+    {tasks.length}
+  </span>
+</div>
 
         {/* Scrollable task area */}
         <Droppable
