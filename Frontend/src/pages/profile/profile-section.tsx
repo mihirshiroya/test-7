@@ -31,6 +31,7 @@ import type { User } from '../../types'
 import type { Achievement, ProfileAnalytics, ProjectSummary } from '../../components/Ui/analytics-data'
 
 import { FOLDER_ICONS, type IconKey } from '../../components/Ui/folder-data'
+import { FOLDER_TINTS, normalizeTint } from '../../components/Ui/project-data'
 import { FunnelChartCard } from '../../components/Ui/funnel-chart'
 import { useTaskStore } from '../../store/slices/taskSlice'
 
@@ -736,27 +737,6 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
 
 
 
-const PROJECT_TINTS: Record<string, string> = {
-
-  lavender: '#8b6fd6',
-
-  violet: '#8b6fd6',
-
-  blue: '#4f86d9',
-
-  cyan: '#2fa0b8',
-
-  emerald: '#3f9a70',
-
-  lime: '#7ea32f',
-
-  amber: '#c4892b',
-
-  rose: '#d0587a',
-
-  pink: '#c256a3',
-
-}
 
 
 
@@ -860,7 +840,7 @@ function ProjectBar({
 
 function ProjectRow({ project }: { project: ProjectSummary }) {
 
-  const tint = PROJECT_TINTS[project.tint] ?? PROJECT_TINTS.lavender
+    const tint = FOLDER_TINTS[normalizeTint(project.tint)].fg
 
   const Icon = FOLDER_ICONS[project.icon as IconKey] ?? FolderKanban
 

@@ -80,7 +80,7 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
 
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-soft bg-canvas shadow-2xl">
         <header className="flex items-center justify-between border-b border-soft px-6 py-4">
-          <h2 id="task-sidebar-title" className="text-lg font-semibold text-foreground">
+          <h2 id="task-sidebar-title" className="font-inter! text-lg font-semibold text-foreground">
             {task ? "Edit task" : "Create task"}
           </h2>
           <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted" aria-label="Close">
@@ -93,57 +93,34 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
 
             {/* Title */}
             <label className={labelClass}>
-              <span className="text-sm font-medium text-foreground">Title</span>
+              <span className="text-sm font-medium text-foreground font-inter!">Title</span>
               <Input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" className={fieldClass} />
             </label>
 
             {/* Description */}
             <label className={labelClass}>
-              <span className="text-sm font-medium text-foreground">Description</span>
+              <span className="text-sm font-medium text-foreground font-inter!">Description</span>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Add details (optional)" className={`${fieldClass} resize-none`} />
             </label>
 
-            {/* Workspace ← replaces category */}
-            <label className={labelClass}>
-              <span className="text-sm font-medium text-foreground">
-                Workspace <span className="text-destructive">*</span>
-              </span>
-              {workspaces.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No workspaces yet — create one first.</p>
-              ) : (
-                <select value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} className={fieldClass}>
-                  <option value="" disabled>Select workspace…</option>
-                  {workspaces.map((ws) => (
-                    <option key={ws.id} value={ws.id}>{ws.name}</option>
-                  ))}
-                </select>
-              )}
-            </label>
+           
 
             {/* Priority + Duration */}
             <div className="grid grid-cols-2 gap-4">
               <label className={labelClass}>
-                <span className="text-sm font-medium text-foreground">Priority</span>
+                <span className="text-sm font-medium text-foreground font-inter!">Priority</span>
                 <select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className={fieldClass}>
                   {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>)}
                 </select>
               </label>
 
               <label className={labelClass}>
-                <span className="text-sm font-medium text-foreground">Planned duration (min)</span>
+                <span className="text-sm font-medium text-foreground font-inter!">Planned duration (min)</span>
                 <Input type="number" min={1} value={minutes} onChange={(e) => setMinutes(e.target.value)} className={fieldClass} />
               </label>
             </div>
 
-            {/* Status — only for new tasks */}
-            {!task && (
-              <label className={labelClass}>
-                <span className="text-sm font-medium text-foreground">Status</span>
-                <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className={fieldClass}>
-                  {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-                </select>
-              </label>
-            )}
+
 
             {/* Start date */}
             <label className={labelClass}>

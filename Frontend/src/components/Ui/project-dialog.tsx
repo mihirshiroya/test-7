@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/utills'
 import { Button } from '../Ui/Button'
-import { Input } from './input'
 import {
   FOLDER_TINTS,
   FOLDER_ICONS,
+  DEFAULT_TINT,
+  normalizeTint,
   type TintKey,
   type IconKey,
 } from './project-data'
@@ -31,13 +32,13 @@ export function ProjectDialog({
   onSubmit: (draft: ProjectDraft) => void
 }) {
   const [name, setName] = useState('')
-  const [tint, setTint] = useState<TintKey>('lavender')
+  const [tint, setTint] = useState<TintKey>(DEFAULT_TINT)
   const [icon, setIcon] = useState<IconKey>('folder')
 
   useEffect(() => {
     if (open) {
       setName(initial?.label ?? '')
-      setTint(initial?.tint ?? 'lavender')
+      setTint(normalizeTint(initial?.tint))
       setIcon(initial?.icon ?? 'folder')
     }
   }, [open, initial])
@@ -91,14 +92,14 @@ export function ProjectDialog({
           <div>
             <h2
               id="project-dialog-title"
-              className="text-lg font-semibold text-ink text-balance tracking-wide"
+              className="text-lg font-semibold text-ink font-inter!"
             >
-              {mode === 'create' ? 'New Workspace' : 'Edit Workspace'}
+              {mode === 'create' ? 'New workspace' : 'Edit workspace'}
             </h2>
 
             <p
               id="project-dialog-desc"
-              className="mt-0.5 text-sm text-steel"
+              className="mt-1 text-sm text-steel"
             >
               {mode === 'create'
                 ? 'Give your workspace a name, color and icon.'
@@ -110,7 +111,7 @@ export function ProjectDialog({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex size-8 items-center justify-center rounded-lg text-steel transition-colors hover:bg-gray-tint hover:text-ink"
+            className="flex size-8 items-center justify-center rounded-lg text-steel hover:bg-gray-tint hover:text-ink"
           >
             <X className="size-[18px]" />
           </button>
@@ -119,12 +120,12 @@ export function ProjectDialog({
         {/* Name */}
         <label
           htmlFor="project-name"
-          className="mb-1.5 block text-sm font-medium text-charcoal"
+          className="mb-1.5 block text-sm font-medium text-charcoal font-inter!"
         >
           Workspace name
         </label>
 
-        <Input
+        <input
           id="project-name"
           autoFocus
           value={name}
@@ -135,11 +136,11 @@ export function ProjectDialog({
             }
           }}
           placeholder="e.g. Website redesign"
-          className="h-11 w-full border border-soft px-3.5 text-sm text-ink outline-none transition-colors placeholder:text-stone focus:border-primary"
+          className="h-11 w-full border border-soft bg-background px-3.5 text-sm text-ink outline-none placeholder:text-stone focus:border-primary"
         />
 
         {/* Color */}
-        <p className="mt-5 mb-2 text-sm font-medium text-charcoal">
+        <p className="mt-5 mb-2 text-sm font-medium text-charcoal font-inter!">
           Color
         </p>
 
@@ -152,11 +153,10 @@ export function ProjectDialog({
               aria-pressed={tint === key}
               onClick={() => setTint(key)}
               className={cn(
-                'size-8 rounded-full border border-soft transition-transform',
-                'hover:scale-110',
+                'size-8 rounded-full border transition-transform hover:scale-110',
                 tint === key
-                  ? 'ring-2 ring-primary ring-offset-4 scale-105 outline-1'
-                  : 'ring-0',
+                  ? 'scale-105 ring-2 ring-primary ring-offset-4'
+                  : '',
               )}
               style={{
                 backgroundColor: FOLDER_TINTS[key].bg,
@@ -169,7 +169,7 @@ export function ProjectDialog({
         </div>
 
         {/* Icon */}
-        <p className="mt-5 mb-2 text-sm font-medium text-charcoal">
+        <p className="mt-5 mb-2 text-sm font-medium text-charcoal font-inter!">
           Icon
         </p>
 
@@ -188,12 +188,15 @@ export function ProjectDialog({
                 className={cn(
                   'flex size-10 items-center justify-center border border-soft transition-colors',
                   selected
-                    ? 'border-primary bg-lavender text-primary'
+                    ? 'text-primary'
                     : 'text-steel hover:bg-gray-tint hover:text-ink',
                 )}
                 style={{
+                  backgroundColor: selected
+                    ? FOLDER_TINTS[tint].bg
+                    : 'transparent',
                   borderColor: selected
-                    ? 'var(--primary)'
+                    ? FOLDER_TINTS[tint].fg
                     : '',
                 }}
               >
@@ -206,9 +209,9 @@ export function ProjectDialog({
         {/* Actions */}
         <div className="mt-7 flex justify-end gap-2">
           <Button
-            variant="outline"
             size="lg"
             onClick={onClose}
+            className="bg-background border border-soft font-inter! text-steel"
           >
             Cancel
           </Button>
@@ -217,7 +220,7 @@ export function ProjectDialog({
             size="lg"
             disabled={!canSubmit}
             onClick={submit}
-            className="bg-primary text-on-primary hover:bg-primary-pressed"
+            className="bg-primary text-on-primary hover:bg-primary-pressed font-inter!"
           >
             {mode === 'create'
               ? 'Create workspace'

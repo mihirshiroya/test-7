@@ -36,6 +36,8 @@ import {
 import {
   FOLDER_TINTS,
   FOLDER_ICONS,
+  DEFAULT_TINT,
+  normalizeTint,
   type TintKey,
   type IconKey,
 } from '../components/Ui/project-data'
@@ -96,7 +98,7 @@ const defaultProjects: ProjectItem[] = []
 const SIDEBAR_COLLAPSED_KEY = 'consistent-sidebar-collapsed'
 
 const DEFAULT_APPEARANCE = {
-  tint: 'lavender' as TintKey,
+  tint: DEFAULT_TINT,
   icon: 'folder' as IconKey,
 }
 
@@ -550,9 +552,7 @@ function AppSidebar() {
                 const ProjectIcon =
                   FOLDER_ICONS[project.icon] ??
                   FOLDER_ICONS[DEFAULT_APPEARANCE.icon]
-                const tint =
-                  FOLDER_TINTS[project.tint] ??
-                  FOLDER_TINTS[DEFAULT_APPEARANCE.tint]
+                const tint = FOLDER_TINTS[normalizeTint(project.tint)]
 
                 return (
                   <li key={project.id}>

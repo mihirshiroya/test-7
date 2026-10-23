@@ -612,7 +612,7 @@ export function KanbanBoard({
 
       <div className="mb-5 flex w-full items-center gap-3">
         {title && (
-          <h2 className="shrink-0 text-xl font-inter! font-bold tracking-tight text-foreground sm:text-2xl">
+          <h2 className="shrink-0 text-xl font-inter! capitalize font-bold tracking-tight text-foreground sm:text-2xl">
             {title}
           </h2>
         )}
