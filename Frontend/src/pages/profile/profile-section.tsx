@@ -36,6 +36,7 @@ import type { Achievement, ProfileAnalytics, ProjectSummary } from '../../compon
 import { FOLDER_ICONS, type IconKey } from '../../components/Ui/folder-data'
 import { FOLDER_TINTS, normalizeTint } from '../../components/Ui/project-data'
 import { FunnelChartCard } from '../../components/Ui/funnel-chart'
+import { AchievementGem } from '../../components/Ui/achivement-gem'
 import { useTaskStore } from '../../store/slices/taskSlice'
 
 
@@ -110,13 +111,27 @@ function Bar({
 
 export function getAchievements(data: ProfileAnalytics | null) {
 
-  const hours = data?.totalFocusHours ?? (data?.heatmap.reduce((sum, day) => sum + day.minutes, 0) ?? 0) / 60
+  const heatmapHours = (data?.heatmap.reduce((sum, day) => sum + day.minutes, 0) ?? 0) / 60
 
-  const achievements = data?.achievements ?? []
+  const hours = Math.max(data?.totalFocusHours ?? 0, heatmapHours)
+
+  const achievements = (data?.achievements ?? []).map((tier) => {
+
+    const unlocked = tier.unlocked || hours >= tier.requiredHours
+
+    return {
+
+      ...tier,
+
+      unlocked,
+
+      progress: unlocked ? 100 : Math.max(tier.progress, Math.min(100, Math.round((hours / tier.requiredHours) * 100))),
+
+    }
+
+  })
 
   const current =
-
-    data?.currentAchievement ??
 
     [...achievements].filter((tier) => tier.unlocked).sort((a, b) => b.requiredHours - a.requiredHours)[0] ??
 
@@ -128,75 +143,41 @@ export function getAchievements(data: ProfileAnalytics | null) {
 
 
 
-const gemFilters: Record<string, string> = {
-
-  starter: 'saturate(0) brightness(1.1)',
-
-  bronze: 'hue-rotate(-12deg) saturate(.65)',
-
-  silver: 'saturate(0) brightness(1.4)',
-
-  gold: 'none',
-
-  diamond: 'hue-rotate(165deg)',
-
-  platinum: 'hue-rotate(215deg)',
-
-  devoted: 'hue-rotate(100deg)',
-
-  legendary: 'hue-rotate(290deg)',
-
-}
-
-
-
 function Gem({ tier, locked = false }: { tier: Achievement; locked?: boolean }) {
 
   return (
 
-    <span
+    <span className="relative isolate mx-auto mt-0.5 mb-1 grid h-[135px] w-full place-items-center" aria-hidden="true">
 
-      className="relative isolate mx-auto mt-0.5 mb-1 grid h-[135px] w-full place-items-center"
+      <AchievementGem
 
-      style={
+        color={tier.color}
 
-        locked
+        icon={tier.icon}
 
-          ? {
+        requiredHours={tier.requiredHours}
 
-              background: `radial-gradient(ellipse at center, color-mix(in srgb, ${tier.color} 16%, transparent), transparent 60%)`,
+        locked={locked}
 
-            }
+        size={118}
 
-          : undefined
+        className={`transition-transform duration-300 group-hover:-translate-y-[3px] ${
 
-      }
-
-      aria-hidden="true"
-
-    >
-
-      <img
-
-        src="/images/profile-gem.png"
-
-        alt=""
-
-        width="135"
-
-        height="135"
-
-        className={`size-[135px] object-contain mix-blend-screen transition-transform duration-300 group-hover:-translate-y-[3px] ${
-
-          locked ? 'scale-80 opacity-[.48] blur-[9px]' : ''
+          locked ? '' : 'group-hover:scale-105'
 
         }`}
 
-        style={{ filter: locked ? undefined : gemFilters[tier.id] }}
-
       />
 
-      {locked && <LockKeyhole size={19} strokeWidth={1.6} className="absolute z-[2] text-primary" />}
+      {locked && (
+
+        <span className="absolute z-[2] grid size-8 place-items-center rounded-full border border-soft bg-background/80 backdrop-blur-sm">
+
+          <LockKeyhole size={15} strokeWidth={1.6} className="text-primary" />
+
+        </span>
+
+      )}
 
     </span>
 
@@ -301,11 +282,13 @@ export function ProfileHeader({
 
               aria-label={`Current earned badge: ${current.title}`}
 
-              className="absolute -right-[9px] -bottom-[3px] grid size-[29px] place-items-center rounded-full border-[3px] border-white bg-[#fcf1d9] text-[#bd8428] shadow-[0_2px_7px_#bd842825]"
+              className="absolute -right-[9px] -bottom-[3px] grid size-[31px] place-items-center rounded-full border-[3px] border-[var(--color-background)] bg-[#131316]"
+
+              style={{ boxShadow: `0 2px 8px ${current.color}55` }}
 
             >
 
-              <Diamond size={18} fill="currentColor" strokeWidth={1.5} />
+              <AchievementGem color={current.color} icon={current.icon} requiredHours={current.requiredHours} size={24} />
 
             </span>
 
@@ -594,9 +577,9 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
 
               key={tier.id}
 
-              className={`group min-w-0 border px-[18px] pt-[15px] pb-[18px] text-center transition-colors ${
+              className={`group min-w-0 border-2 px-[18px] pt-[15px] pb-[18px] text-center transition-colors ${
 
-                isCurrent ? 'border-[#87703e] bg-[#242018]' : 'border-soft bg-transparent hover:border-[#65556d]'
+                isCurrent ? 'border-[#87703e] bg-background' : 'border-soft bg-transparent hover:border-[#65556d]'
 
               }`}
 
@@ -606,7 +589,7 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
 
                 {isCurrent ? (
 
-                  <span className="text-[7px] tracking-[.7px] text-[#d8b365]">CURRENT BADGE</span>
+                  <span className="text-[9px] font-semibold tracking-[.7px] text-[#d8b365]">CURRENT BADGE</span>
 
                 ) : (
 
@@ -648,7 +631,7 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
 
                   <span
 
-                    className={`flex items-center gap-1 text-[8px] ${isCurrent ? 'text-[#c4a264]' : 'text-[#918c96]'}`}
+                    className={`flex items-center font-semibold gap-1 text-[10px] ${isCurrent ? 'text-[#c4a264]' : 'text-[#918c96]'}`}
 
                   >
 

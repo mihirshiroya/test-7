@@ -122,11 +122,15 @@ function ProductivityCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-secondary">
-            Daily productivity
-          </p>
+          <h3
+        id="heatmap-title"
+        className="text-heading-5 text-primary"
+      >
+        Daily productivity
+      </h3>
+         
 
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-primary">
+          <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
             {monthly
               ? `${monthly.avgTasksPerDay} tasks/day`
               : "—"}
@@ -134,31 +138,31 @@ function ProductivityCard({
 
         </div>
 
-        <div className="flex items-center gap-1 border border-soft p-1">
-          <button
-            type="button"
-            aria-label="Previous month"
-            onClick={() => onMonthChange(shiftMonth(month, -1))}
-            disabled={loading}
-            className="grid size-7 place-items-center rounded-lg text-[#6b6b84] transition-colors hover:bg-[#f0f0f7] hover:text-[#14142b] disabled:opacity-30"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
+       <div className="flex items-center overflow-hidden border border-soft">
+  <button
+    type="button"
+    aria-label="Previous month"
+    onClick={() => onMonthChange(shiftMonth(month, -1))}
+    disabled={loading}
+    className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+  >
+    <ChevronLeft className="size-4" />
+  </button>
 
-          <span className="min-w-[120px] text-center text-sm font-medium text-steel">
-            {monthLabel(month)}
-          </span>
+  <span className="flex h-8 min-w-[120px] items-center justify-center border-x border-soft px-3 font-inter! text-xs font-medium text-foreground">
+    {monthLabel(month)}
+  </span>
 
-          <button
-            type="button"
-            aria-label="Next month"
-            onClick={() => onMonthChange(shiftMonth(month, 1))}
-            disabled={loading || month >= currentMonth}
-            className="grid size-7 place-items-center rounded-lg text-[#6b6b84] transition-colors hover:bg-[#f0f0f7] hover:text-[#14142b] disabled:opacity-30"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
+  <button
+    type="button"
+    aria-label="Next month"
+    onClick={() => onMonthChange(shiftMonth(month, 1))}
+    disabled={loading || month >= currentMonth}
+    className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+  >
+    <ChevronRight className="size-4" />
+  </button>
+</div>
       </div>
 
       <div
@@ -264,22 +268,18 @@ function FocusTimeCard({ focus }: { focus: ProfileAnalytics['focus30'] | null })
     <section className={`p-5 sm:p-6 border border-soft`}>
       <div className="flex flex-wrap items-center gap-3">
         <div>
-          <p className="text-sm text-secondary">Focus time · Last 30 days</p>
+          <h3
+        id="heatmap-title"
+        className="text-heading-5 text-primary"
+      >
+        Focus time
+      </h3>
+        
           <div className="mt-1 flex items-center gap-2.5">
-            <p className="text-2xl font-semibold tracking-tight text-primary">
+            <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
               {focus ? formatMinutes(focus.totalMinutes) : '—'}
             </p>
-            {focus && (
-              <span
-                className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
-                  delta >= 0 ? 'bg-[#efeaff] text-[#5b38f0]' : 'bg-rose-50 text-rose-600'
-                }`}
-                title={`vs ${formatMinutes(focus.prevTotalMinutes)} in the previous 30 days`}
-              >
-                {delta > 0 ? '+' : ''}
-                {delta}%
-              </span>
-            )}
+            
           </div>
         </div>
       </div>
@@ -643,9 +643,7 @@ export default function ProductivityProfile() {
           <FocusTimeCard focus={data?.focus30 ?? null} />
         </section>
 
-        <p className="mt-[30px] flex items-center justify-center gap-1.5 text-[9px] text-[#9a909f]">
-          <Sparkles size={11} aria-hidden="true" /> Progress isn&apos;t always loud. Sometimes, it&apos;s just showing up.
-        </p>
+
       </div>
 
       {editOpen && user && (

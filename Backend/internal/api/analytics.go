@@ -780,7 +780,18 @@ func (s *Server) analyticsProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allTimeFocusHours := int(totals.totalClosed / 3600)
+	// All-time focus is measured exactly like the heatmap (per-day rounded
+	// minutes, open sessions included) so the two numbers never disagree.
+	allSessions, err := sessionsOverlapping(ctx, s.db, userID, time.Unix(0, 0), dayStart(shiftDay(today, 1), tz))
+	if err != nil {
+		s.analyticsError(w, err)
+		return
+	}
+	allTimeFocusMinutes := 0
+	for _, seconds := range focusByDay(allSessions, tz, now) {
+		allTimeFocusMinutes += toMinutes(seconds)
+	}
+	allTimeFocusHours := allTimeFocusMinutes / 60
 	if totals.userFound && allTimeFocusHours != totals.totalFocusHrs {
 		if _, err := s.patchUser(ctx, s.db, userID, new(database.Sets).Add("totalFocusHours", allTimeFocusHours)); err != nil {
 			s.analyticsError(w, err)
@@ -861,8 +872,8 @@ func (s *Server) analyticsProfile(w http.ResponseWriter, r *http.Request) {
 	for i, tier := range achievementTiers {
 		achievements[i] = achievement{
 			achievementTier: tier,
-			Unlocked:        allTimeFocusHours >= tier.RequiredHours,
-			Progress:        min(100, compat.RoundInt(float64(allTimeFocusHours)/float64(tier.RequiredHours)*100)),
+			Unlocked:        allTimeFocusMinutes >= tier.RequiredHours*60,
+			Progress:        min(100, compat.RoundInt(float64(allTimeFocusMinutes)/float64(tier.RequiredHours*60)*100)),
 		}
 		if achievements[i].Unlocked {
 			current = achievements[i]
