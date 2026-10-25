@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 
 import { Link } from 'react-router-dom'
+import david from '../../assets/goggins-banner.png'
+import { PixelShape } from '../../components/Ui/pixel-shape'
+import { ACTIVITY_GLYPHS, ARROW_DOWN, ARROW_UP, CHECK_GLYPH, MOON_GLYPH, OVERVIEW, PALETTE } from '../../lib/consistency'
 
 import {
 
@@ -235,31 +238,28 @@ export function ProfileHeader({
 
     <header className="overflow-hidden border border-soft bg-background">
 
-      <div className="relative flex h-[114px] items-end justify-end overflow-hidden bg-[#ebe5f2] px-6 py-[19px] text-[#7b688e]">
+      <div className="relative h-[150px] overflow-hidden bg-[#131316] sm:h-[170px]">
 
-        <div
-
-          aria-hidden="true"
-
-          className="absolute -top-[480px] left-[18%] size-[650px] rounded-full border border-[#d7cce5]"
-
-          style={{
-
-            boxShadow:
-
-              '0 0 0 28px #ebe5f2, 0 0 0 29px #dcd1e8, 0 0 0 65px #ebe5f2, 0 0 0 66px #dcd1e8, 0 0 0 106px #ebe5f2, 0 0 0 107px #dcd1e8',
-
-            transform: 'rotate(-25deg) scaleX(1.6)',
-
-          }}
-
+        <img
+          src={david}
+          alt="Illustration of David Goggins running through the rain"
+          className="absolute inset-0 size-full object-cover object-[85%_center]"
         />
 
-        <span className="relative flex items-center gap-[7px] text-[10px]">
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-[#131316]/95 via-[#131316]/55 to-transparent" />
 
-          <Sparkles size={13} /> A little focus. A lot of possibility.
+        <figure className="relative flex h-full max-w-[65%] flex-col justify-center gap-2 px-[26px] pb-8 sm:max-w-[55%]">
 
-        </span>
+          <blockquote className="text-pretty text-[15px] font-bold capitalize leading-[1.15] tracking-tight text-white sm:text-xl">
+            {"Don't stop when you're tired. Stop when you're done."}
+          </blockquote>
+
+          <figcaption className="flex items-center gap-2 text-[10px] font-semibold capitalize text-[#b9a6ff]">
+            <span aria-hidden="true" className="h-px w-5 bg-[#6d4aff]" />
+            David Goggins
+          </figcaption>
+
+        </figure>
 
       </div>
 
@@ -267,7 +267,7 @@ export function ProfileHeader({
 
       <div className="px-[26px]">
 
-        <div className="relative -mt-[37px] size-[82px] rounded-3xl border-[5px] border-[var(--color-background)] bg-[#e5dbea] shadow-[0_0_0_1px_#e9dfef]">
+        <div className="relative -mt-[37px] size-[82px] rounded-3xl border-[5px] border-[var(--color-background)] shadow-[var(--color-primary)]">
 
           {user?.avatar ? (
 
@@ -315,13 +315,13 @@ export function ProfileHeader({
 
 
 
-        <div className="mt-[15px] flex items-center justify-between gap-4">
+        <div className="mt-[15px] flex items-center justify-between gap-4 mb-[15px]">
 
           <div>
 
             <div className="flex flex-wrap items-center gap-[11px]">
 
-              <h1 className="text-[25px] leading-[1.3] font-semibold tracking-[-1px]">
+              <h1 className="text-[25px] font-semibold tracking-[-1px] font-inter!">
 
                 {user ? `${user.firstName} ${user.lastName}` : 'Your profile'}
 
@@ -339,7 +339,7 @@ export function ProfileHeader({
 
             </div>
 
-            <p className="mt-[7px] text-[11px] text-[#777580]">
+            <p className="mt-[7px] text-[12px] text-steel font-semibold">
 
               {user?.email ?? 'Your own little corner of progress.'}
 
@@ -357,7 +357,7 @@ export function ProfileHeader({
 
             disabled={!user}
 
-            className="flex items-center gap-[7px] rounded-[7px] border border-soft px-[11px] py-2 text-[11px] font-medium whitespace-nowrap text-primary transition-colors disabled:opacity-55"
+            className="flex items-center gap-[7px] border border-soft px-[11px] py-2 text-[11px] font-medium whitespace-nowrap text-primary transition-colors disabled:opacity-55"
 
           >
 
@@ -369,21 +369,7 @@ export function ProfileHeader({
 
 
 
-        <div className="mt-5 flex justify-between gap-4 border-t border-soft py-[17px] text-[10px] text-[#777580]">
-
-          <span className="flex items-center gap-1.5">
-
-            <span className="size-[5px] rounded-full bg-[#7f9d80]" /> Building better habits, one day at a time.
-
-          </span>
-
-          <span className="flex items-center gap-1.5">
-
-            <LockKeyhole size={11} /> Only visible to you
-
-          </span>
-
-        </div>
+     
 
       </div>
 
@@ -429,15 +415,16 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
 
         <div>
 
+ <h3
+        id="heatmap-title"
+        className="text-heading-5 text-primary"
+      >
+        Your focus, crystallized.
+      </h3>
 
+          
 
-          <h2 id="" className="mt-2.5 text-[26px] font-medium leading-[1.35] tracking-[-0.7px] text-primary">
-
-            Your focus, crystallized.
-
-          </h2>
-
-          <p className="mt-[7px] text-xs leading-[1.6] text-primary">
+          <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
 
             Every hour is a step forward. Every gem tells your story.
 
@@ -1055,81 +1042,52 @@ export function ProfileProjects({ projects }: { projects: ProjectSummary[] | nul
 
   return (
 
-    <section className="mt-9" aria-labelledby="profile-projects-title" aria-busy={!projects}>
+   <section
+  className="mt-9"
+  aria-labelledby="profile-projects-title"
+  aria-busy={!projects}
+>
 
-      <div className="flex items-start justify-between gap-4">
 
-        <div>
+  {/* Task completion summary */}
+  {tasksReady ? (
+    <div className="mt-1">
 
-          <h2 id="profile-projects-title" className="text-xl font-semibold tracking-tight">
-
-            Projects
-
-          </h2>
-
-          <p className="mt-1 text-sm text-primary/60">Task progress across everything you&apos;re working on.</p>
-
-        </div>
-
-        <span className="pt-1 text-sm whitespace-nowrap text-primary/60 tabular-nums">
-
-          {list.length} {list.length === 1 ? 'project' : 'projects'}
-
-        </span>
-
+      <div className="mt-5">
+        <FunnelChartCard
+          title=""
+          stages={stages}
+          subtitle=""
+        />
       </div>
+    </div>
+  ) : (
+    <div
+      className="mt-5 rounded-2xl border border-soft p-5 text-sm text-primary/60"
+      role="status"
+    >
+      Loading task progress…
+    </div>
+  )}
 
-
-
-      {tasksReady ? (
-        <div className="mt-5">
-          <FunnelChartCard
-            title="Task completion funnel"
-            stages={stages}
-            subtitle={`All time · ${taskCounts.completed} of ${taskCounts.total} tasks completed`}
-          />
-        </div>
-      ) : (
-        <div className="mt-5 rounded-2xl border border-soft p-5 text-sm text-primary/60" role="status">
-          Loading task progress…
-        </div>
-      )}
-
-      {/* Overall progress + filters */}
-
-      
-
-
-
-      {!projects && (
-
-        <ul className="mt-4 overflow-hidden rounded-2xl border border-soft" aria-hidden="true">
-
-          {[0, 1, 2].map((i) => (
-
-            <li key={i} className="flex items-center gap-4 border-t border-soft px-5 py-4 first:border-t-0">
-
-              <span className="size-10 animate-pulse rounded-xl bg-primary/10 motion-reduce:animate-none" />
-
-              <span className="h-4 w-40 animate-pulse rounded bg-primary/10 motion-reduce:animate-none" />
-
-            </li>
-
-          ))}
-
-        </ul>
-
-      )}
-
-
-
-      
-
-
-
-      
-
-    </section>
+  {/* Loading skeleton */}
+  {!projects && (
+    <ul
+      className="mt-4 overflow-hidden rounded-2xl border border-soft"
+      aria-hidden="true"
+    >
+      {[0, 1, 2].map((i) => (
+        <li
+          key={i}
+          className="flex items-center gap-4 border-t border-soft px-5 py-4 first:border-t-0"
+        >
+          <span className="size-10 animate-pulse rounded-xl bg-primary/10 motion-reduce:animate-none" />
+          <span className="h-4 w-40 animate-pulse rounded bg-primary/10 motion-reduce:animate-none" />
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
 
   )
 

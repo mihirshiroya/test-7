@@ -1,4 +1,5 @@
-import { ArrowDownRight, ArrowUpRight, Clock, ListChecks, Target, Timer } from "lucide-react"
+
+import { Clock, ListChecks, Target, Timer } from "lucide-react"
 import {
   type ComparisonMode,
   type Metric,
@@ -6,13 +7,19 @@ import {
   metricValues,
 } from "../Ui/analytics-data"
 
+import { PixelShape } from "../Ui/pixel-shape"
+import { ARROW_UP, ARROW_DOWN, PALETTE } from "../../lib/consistency"
+
+const ORANGE = PALETTE.overview
+const UP = PALETTE.session
+const DIM = "#2a2a2a"
+
 const ICONS = {
   focus: Clock,
   tasks: ListChecks,
   rate: Target,
   sessions: Timer,
 } as const
-
 
 export function StatCard({
   metric,
@@ -28,9 +35,12 @@ export function StatCard({
 
   const isPositive = delta > 0
   const isNegative = delta < 0
-  const isEqual = delta === 0
 
   const periodLabel = mode === "today" ? "yesterday" : "last week"
+
+  const up = isPositive
+  const pixelRows = up ? ARROW_UP : ARROW_DOWN
+  const pixelColor = up ? UP : ORANGE
 
   return (
     <div
@@ -44,7 +54,6 @@ export function StatCard({
         transition-all duration-300
       "
     >
-      {/* Redraw Animation Keyframe */}
       <style>{`
         @keyframes redrawPath {
           0% {
@@ -62,8 +71,8 @@ export function StatCard({
           isPositive
             ? "bg-emerald-500/10 group-hover:bg-emerald-500/20 dark:bg-emerald-500/15 dark:group-hover:bg-emerald-500/25"
             : isNegative
-            ? "bg-rose-500/10 group-hover:bg-rose-500/20 dark:bg-rose-500/15 dark:group-hover:bg-rose-500/25"
-            : "bg-zinc-500/10 group-hover:bg-zinc-500/20 dark:bg-zinc-500/15 dark:group-hover:bg-zinc-500/25"
+              ? "bg-rose-500/10 group-hover:bg-rose-500/20 dark:bg-rose-500/15 dark:group-hover:bg-rose-500/25"
+              : "bg-zinc-500/10 group-hover:bg-zinc-500/20 dark:bg-zinc-500/15 dark:group-hover:bg-zinc-500/25"
         }`}
       />
 
@@ -71,14 +80,10 @@ export function StatCard({
       <div
         className="
           pointer-events-none absolute inset-x-0 top-0 h-px
-          bg-gradient-to-r
-          from-transparent
-          via-black/10
-          to-transparent
+          bg-gradient-to-r from-transparent via-black/10 to-transparent
           transition-opacity duration-500
           group-hover:via-black/20
-          dark:via-white/20
-          dark:group-hover:via-white/40
+          dark:via-white/20 dark:group-hover:via-white/40
         "
       />
 
@@ -86,17 +91,27 @@ export function StatCard({
       <div className="relative z-10 flex items-center justify-between gap-3">
         <span
           className="
-            text-xl 
+            text-xl font-semibold
             transition-colors
-            group-hover:text-foreground font-semibold
+            group-hover:text-foreground
           "
         >
           {metric.label}
         </span>
 
- 
-          <Icon className="size-6 text-secondary opacity-40" />
-
+        {/* Pixel Trend Icon */}
+        <div className="flex size-9 shrink-0 items-center justify-center">
+          {isPositive || isNegative ? (
+            <PixelShape
+              rows={pixelRows}
+              color={pixelColor}
+              cell={3}
+              animation="drop"
+            />
+          ) : (
+            <Icon className="size-6 text-secondary opacity-40" />
+          )}
+        </div>
       </div>
 
       {/* Primary Value */}
@@ -105,19 +120,19 @@ export function StatCard({
           key={`${mode}-${current}`}
           className="
             text-3xl font-semibold tracking-tight
-            text-foreground
-            tabular-nums
+            text-foreground tabular-nums
           "
         >
           {formatValue(metric, current)}
         </span>
-             <span
-          className={`font-semibold tabular-nums text-xs !font-inter ${
+
+        <span
+          className={`text-xs font-semibold tabular-nums !font-inter ${
             isPositive
               ? "text-emerald-600 dark:text-emerald-400"
               : isNegative
-              ? "text-rose-600 dark:text-rose-400"
-              : "text-zinc-500 dark:text-zinc-400"
+                ? "text-rose-600 dark:text-rose-400"
+                : "text-zinc-500 dark:text-zinc-400"
           }`}
         >
           {isPositive ? "+" : ""}
@@ -130,35 +145,43 @@ export function StatCard({
         <span>
           vs {formatValue(metric, previous)} {periodLabel}
         </span>
-   
       </div>
 
-      {/* ============================================================ */}
-      {/* STATIC CHART AT EXACT BOTTOM RIGHT (Redraws on Card Hover)  */}
-      {/* ============================================================ */}
+      {/* Static Chart at Bottom Right */}
       <div className="pointer-events-none absolute bottom-0 right-0 h-20 w-25">
         {isPositive ? (
-          /* Positive Trend: Rising Curve */
           <svg
             viewBox="0 0 100 36"
             fill="none"
             className="h-full w-full"
           >
             <defs>
-              <linearGradient id={`grad-pos-${metric.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+              <linearGradient
+                id={`grad-pos-${metric.key}`}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="#10b981"
+                  stopOpacity="0.28"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="#10b981"
+                  stopOpacity="0"
+                />
               </linearGradient>
             </defs>
 
-            {/* Gradient Fill under path */}
             <path
               d="M 0 28 C 16 28, 24 32, 38 20 C 52 10, 60 22, 74 12 C 84 5, 92 8, 100 4 L 100 36 L 0 36 Z"
               fill={`url(#grad-pos-${metric.key})`}
               className="opacity-70 transition-opacity duration-300 group-hover:opacity-100"
             />
 
-            {/* Main Redrawing Stroke */}
             <path
               d="M 0 28 C 16 28, 24 32, 38 20 C 52 10, 60 22, 74 12 C 84 5, 92 8, 100 4"
               fill="none"
@@ -177,27 +200,38 @@ export function StatCard({
             />
           </svg>
         ) : isNegative ? (
-          /* Negative Trend: Falling Curve */
           <svg
             viewBox="0 0 100 36"
             fill="none"
             className="h-full w-full"
           >
             <defs>
-              <linearGradient id={`grad-neg-${metric.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
+              <linearGradient
+                id={`grad-neg-${metric.key}`}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="#f43f5e"
+                  stopOpacity="0.28"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="#f43f5e"
+                  stopOpacity="0"
+                />
               </linearGradient>
             </defs>
 
-            {/* Gradient Fill under path */}
             <path
               d="M 0 8 C 16 8, 24 4, 38 14 C 52 24, 60 12, 74 22 C 84 29, 92 26, 100 32 L 100 36 L 0 36 Z"
               fill={`url(#grad-neg-${metric.key})`}
               className="opacity-70 transition-opacity duration-300 group-hover:opacity-100"
             />
 
-            {/* Main Redrawing Stroke */}
             <path
               d="M 0 8 C 16 8, 24 4, 38 14 C 52 24, 60 12, 74 22 C 84 29, 92 26, 100 32"
               fill="none"
@@ -216,27 +250,38 @@ export function StatCard({
             />
           </svg>
         ) : (
-          /* Equal / Neutral Trend: Flat Straight Horizontal Line */
           <svg
             viewBox="0 0 100 36"
             fill="none"
             className="h-full w-full"
           >
             <defs>
-              <linearGradient id={`grad-eq-${metric.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#71717a" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="#71717a" stopOpacity="0.0" />
+              <linearGradient
+                id={`grad-eq-${metric.key}`}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="#71717a"
+                  stopOpacity="0.22"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="#71717a"
+                  stopOpacity="0"
+                />
               </linearGradient>
             </defs>
 
-            {/* Flat Gradient Fill */}
             <path
               d="M 0 18 L 100 18 L 100 36 L 0 36 Z"
               fill={`url(#grad-eq-${metric.key})`}
               className="opacity-50 transition-opacity duration-300 group-hover:opacity-80"
             />
 
-            {/* Straight Horizontal Path */}
             <path
               d="M 0 18 L 100 18"
               fill="none"
@@ -259,4 +304,3 @@ export function StatCard({
     </div>
   )
 }
-

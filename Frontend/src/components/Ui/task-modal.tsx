@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 import { Input } from './input'
-import { useTaskStore } from "../../store/slices/taskSlice.tsx"
+import { CustomSelect } from "./custom-select"
+import type { SelectOption } from "./custom-select"
+import { DateTimePicker } from "./date-time-picker.tsx"
+import { PRIORITY_META, useTaskStore } from "../../store/slices/taskSlice.tsx"
 import type { Task, TaskPriority, TaskStatus } from "../../store/slices/taskSlice.tsx"
 
 interface TaskModalProps {
@@ -20,6 +23,13 @@ const STATUSES: TaskStatus[]     = ["TODO", "IN_PROGRESS", "ON_HOLD", "COMPLETED
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   LOW: "Low", MEDIUM: "Medium", HIGH: "High", URGENT: "Urgent",
 }
+const PRIORITY_OPTIONS: SelectOption<TaskPriority>[] = PRIORITIES.map((p) => ({
+  value: p,
+  label: PRIORITY_LABELS[p],
+  color: PRIORITY_META[p].color,
+  bg: PRIORITY_META[p].bg,
+}))
+
 const STATUS_LABELS: Record<TaskStatus, string> = {
   TODO: "To Do", IN_PROGRESS: "In Progress", ON_HOLD: "On Hold", COMPLETED: "Completed",
 }
@@ -107,41 +117,44 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
 
             {/* Priority + Duration */}
             <div className="grid grid-cols-2 gap-4">
-              <label className={labelClass}>
-                <span className="text-sm font-medium text-foreground font-inter!">Priority</span>
-                <select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className={fieldClass}>
-                  {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>)}
-                </select>
-              </label>
+              <div className={labelClass}>
+                <span id="task-priority-label" className="text-sm font-medium text-foreground font-inter!">Priority</span>
+                <CustomSelect value={priority} options={PRIORITY_OPTIONS} onChange={setPriority} labelId="task-priority-label" />
+              </div>
 
               <label className={labelClass}>
                 <span className="text-sm font-medium text-foreground font-inter!">Planned duration (min)</span>
-                <Input type="number" min={1} value={minutes} onChange={(e) => setMinutes(e.target.value)} className={fieldClass} />
+                <Input type="number" min={1} value={minutes} onChange={(e) => setMinutes(e.target.value)} className={`${fieldClass} h-9`} />
               </label>
             </div>
 
-
-
             {/* Start date */}
-            <label className={labelClass}>
-              <span className="text-sm font-medium text-foreground">Start date</span>
-              <Input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={fieldClass} />
-            </label>
+            <div className={labelClass}>
+              <span id="task-start-label" className="text-sm font-medium text-foreground font-inter!">Start date</span>
+              <DateTimePicker value={startDate} onChange={setStartDate} labelId="task-start-label" placeholder="No start date" />
+            </div>
 
             {/* Deadline */}
-            <label className={labelClass}>
-              <span className="text-sm font-medium text-foreground">Deadline date</span>
-              <Input type="datetime-local" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className={fieldClass} />
-            </label>
+            <div className={labelClass}>
+              <span id="task-deadline-label" className="text-sm font-medium text-foreground font-inter!">Deadline date</span>
+              <DateTimePicker
+                value={deadlineDate}
+                onChange={setDeadlineDate}
+                labelId="task-deadline-label"
+                placeholder="No deadline"
+                minValue={startDate}
+                defaultHour={17}
+              />
+            </div>
           </div>
         </div>
 
         <footer className="flex gap-3 border-t border-soft p-6">
-          <button type="button" onClick={onClose} className="flex-1 border border-soft px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
+          <button type="button" onClick={onClose} className="flex-1 font-inter! border border-soft px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
             Cancel
           </button>
           <button type="button" onClick={submit} disabled={!title.trim() || !workspaceId}
-            className="flex-1 bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-40">
+            className="flex-1 bg-primary px-4 py-2.5 text-sm font-inter! font-medium text-primary-foreground hover:opacity-90 disabled:opacity-40">
             {task ? "Save changes" : "Create task"}
           </button>
         </footer>

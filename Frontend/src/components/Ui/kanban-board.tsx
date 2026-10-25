@@ -48,6 +48,9 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu"
 
+import { PixelShape } from './pixel-shape.tsx'
+import { BOX_GLYPH, CHECK_GLYPH, KANBAN, PALETTE, PAUSE_GLYPH, type KanbanCard } from '../../lib/consistency.ts'
+
 interface KanbanBoardProps {
   /**
    * Optional board title.
@@ -910,24 +913,69 @@ const KanbanColumn = memo(
           gap-3
         "
       >
-        {/* Column header */}
-        <div
-  className="flex shrink-0 items-center justify-between border-l-[3px] px-3 py-2"
+    
+{/* Column header */}
+<div
+  className="flex shrink-0 items-center gap-2 border-l-[3px] px-3 py-2"
   style={{
     borderColor: meta.accent,
     backgroundColor: `color-mix(in srgb, ${meta.accent} 12%, transparent)`,
   }}
 >
-  <div className="flex items-center gap-2">
-    <span className="text-sm font-semibold text-foreground">
-      {meta.title}
-    </span>
-  </div>
+  {/* Title first */}
+  <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+    {meta.title}
+  </span>
 
-  <span className="ml-auto rounded-full bg-card px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+  {/* Count after title */}
+  <span className="shrink-0 rounded-full bg-card px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
     {tasks.length}
   </span>
+
+  {/* Icon at the end */}
+  <span
+    className="ml-auto flex size-5 shrink-0 items-center justify-center"
+    aria-hidden="true"
+  >
+    {status === "TODO" && (
+      <PixelShape
+        rows={BOX_GLYPH}
+        color={meta.accent}
+        cell={4}
+        animation="drop"
+      />
+    )}
+
+    {status === "IN_PROGRESS" && (
+      <PixelShape
+        rows={PAUSE_GLYPH}
+        color={meta.accent}
+        cell={4}
+        animation="flicker"
+      />
+    )}
+
+    {status === "ON_HOLD" && (
+      <PixelShape
+        rows={PAUSE_GLYPH}
+        color={meta.accent}
+        cell={4}
+        animation="flicker"
+      />
+    )}
+
+    {status === "COMPLETED" && (
+      <PixelShape
+        rows={CHECK_GLYPH}
+        color={meta.accent}
+        cell={4}
+        animation="drop"
+      />
+    )}
+  </span>
 </div>
+
+
 
         {/* Scrollable task area */}
         <Droppable

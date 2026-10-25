@@ -6,11 +6,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Clock3,
-  Flame,
   Sparkles,
-  TrendingUp,
-  UserRound,
   X,
 } from 'lucide-react'
 
@@ -22,6 +18,8 @@ import {
 
 import { ActivityHeatmap } from '../components/Ui/activity-heatmap'
 import { HeatmapSkeleton } from '../components/Ui/skeletons'
+import { PixelShape } from '../components/Ui/pixel-shape'
+import { getProductivityShape } from '../lib/productivity-shapes'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
   fetchProfileAnalytics,
@@ -530,18 +528,18 @@ export default function ProductivityProfile() {
         label: 'Tasks completed',
         value: s ? fmt(s.totalCompleted) : '—',
         hint: undefined as string | undefined,
-        icon: Check,
+        shape: 'tasks',
       },
       {
         label: 'Best productivity day',
         value: s ? `${s.bestDay?.count ?? 0} tasks` : '—',
         hint: s?.bestDay ? fmtDay(s.bestDay.date) : undefined,
-        icon: TrendingUp,
+        shape: 'goals',
       },
       {
         label: 'Longest focus session',
         value: s ? fmtSeconds(s.longestSessionSeconds) : '—',
-        icon: Clock3,
+        shape: 'focus',
       },
       {
         label: 'Completion streak',
@@ -552,7 +550,7 @@ export default function ProductivityProfile() {
           s && s.longestStreak > 0
             ? `Best: ${s.longestStreak} days`
             : undefined,
-        icon: Flame,
+        shape: 'streaks',
       },
     ]
   }, [data])
@@ -583,25 +581,51 @@ export default function ProductivityProfile() {
         )}
 
         <section
-          aria-label="Productivity statistics"
-          className="mt-5 mb-7 grid grid-cols-1 gap-y-5 border border-soft py-[18px] sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {stats.map((s, i) => (
-            <div
-              key={s.label}
-              className={`px-5 ${i < stats.length - 1 ? 'lg:border-r border-soft' : ''}`}
+  aria-label="Productivity statistics"
+  className="my-5 grid grid-cols-1 gap-y-5 border border-soft py-[18px] sm:grid-cols-2 lg:grid-cols-4"
+>
+  {stats.map((s, i) => (
+    <div
+  key={s.label}
+  className={`relative px-5  space-y-4 ${
+    i < stats.length - 1
+      ? "lg:after:absolute  lg:after:right-0 lg:after:-top-[18px] lg:after:-bottom-[18px] lg:after:w-px lg:after:bg-[var(--color-border-soft)]"
+      : ""
+  }`}
+>
+      <div className="flex items-center justify-between gap-3 text-primary">
+        <span className="text-lg font-semibold">{s.label}</span>
+        {(() => {
+          const glyph = getProductivityShape(s.shape)
+          return (
+            <span
+              className="flex shrink-0 items-center justify-center"
+              aria-hidden="true"
             >
-              <div className="mb-2 flex items-center justify-between text-[#aaa0bc]">
-                <span className="text-[10px] text-[#777580]">{s.label}</span>
-                <s.icon size={13} aria-hidden="true" />
-              </div>
-              <p className="text-2xl font-semibold tracking-[-0.7px]">{s.value}</p>
-              <p className="mt-[5px] min-h-3.5 text-[9px] text-[#8d8797]">
-                {s.hint ?? (s.label === 'Tasks completed' ? 'One task at a time' : 'Time well invested')}
-              </p>
-            </div>
-          ))}
-        </section>
+              <PixelShape
+                rows={glyph.rows}
+                color={glyph.color}
+                cell={3}
+                animation="flicker"
+              />
+            </span>
+          )
+        })()}
+      </div>
+
+      <p className="font-inter! text-xl font-semibold tracking-[-0.7px]">
+        {s.value}
+      </p>
+
+      <p className=" min-h-3.5 font-inter! text-[9px] font-semibold text-steel -mt-2">
+        {s.hint ??
+          (s.label === 'Tasks completed'
+            ? 'One task at a time'
+            : 'Time well invested')}
+      </p>
+    </div>
+  ))}
+</section>
 
         <AchievementsSection data={data} />
 

@@ -2133,3 +2133,174 @@ select::-webkit-scrollbar-thumb:hover {
 @media (prefers-reduced-motion: reduce) {
   .timer-controls button { transition: none; }
 }
+
+
+:root {
+  --px-spring-soft: linear(0, 0.042, 0.143, 0.265, 0.398, 0.532, 0.668, 0.778, 0.871, 0.945, 1.006, 1.045, 1.07, 1.085, 1.088, 1.085, 1.078, 1.066, 1.055, 1.043, 1.031, 1.021, 1.012, 1.006, 1, 0.996, 0.994, 0.993, 0.992, 0.992, 0.993, 0.994, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1, 1, 1);
+  --px-spring-bouncy: linear(0, 0.125, 0.386, 0.691, 0.966, 1.166, 1.273, 1.294, 1.251, 1.171, 1.08, 1.001, 0.945, 0.917, 0.914, 0.928, 0.953, 0.979, 1.002, 1.018, 1.025, 1.025, 1.021, 1.013, 1.006, 0.999, 0.995, 0.993, 0.993, 0.994, 0.996, 0.999, 1.001, 1.002, 1.002, 1.002, 1.002, 1.001, 1, 1, 1);
+  --px-spring-snappy: linear(0, 0.088, 0.29, 0.521, 0.75, 0.944, 1.097, 1.182, 1.216, 1.211, 1.175, 1.127, 1.076, 1.03, 0.991, 0.967, 0.955, 0.952, 0.958, 0.967, 0.979, 0.989, 0.999, 1.005, 1.009, 1.01, 1.01, 1.008, 1.006, 1.003, 1.001, 0.999, 0.998, 0.998, 0.998, 0.998, 0.999, 0.999, 1, 1, 1);
+  --px-spring-morph: linear(0, 0.042, 0.142, 0.261, 0.405, 0.535, 0.668, 0.775, 0.864, 0.943, 0.997, 1.038, 1.062, 1.077, 1.081, 1.078, 1.071, 1.062, 1.051, 1.04, 1.029, 1.02, 1.013, 1.006, 1.001, 0.998, 0.995, 0.994, 0.994, 0.994, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.999, 0.999, 1, 1, 1);
+}
+
+.px-icon {
+  display: grid;
+  contain: layout style;
+}
+
+.px-cell {
+  display: block;
+  opacity: 0;
+}
+
+.px-dot {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: var(--px-color);
+  backface-visibility: hidden;
+  transition: transform 0.95s var(--px-spring-snappy);
+}
+
+/* Entry (runs once when 60% visible) */
+.px-icon[data-entered] .px-cell {
+  animation: px-enter-assemble 0.75s var(--px-spring-soft) calc(var(--i) * 60ms) both;
+}
+.px-icon[data-anim='drop'][data-entered] .px-cell {
+  animation: px-enter-drop 1s var(--px-spring-bouncy) calc(var(--i) * 60ms) both;
+}
+.px-icon:is([data-anim='wave'], [data-anim='flicker'], [data-anim='trail'])[data-entered] .px-cell {
+  animation: px-enter-pop 0.75s var(--px-spring-soft) calc(var(--i) * 60ms) both;
+}
+
+/* Loops — wave animates `transform` so it composes with the entry's `translate` */
+.px-icon[data-anim='wave'][data-entered] .px-cell {
+  animation:
+    px-enter-pop 0.75s var(--px-spring-soft) calc(var(--i) * 60ms) both,
+    px-wave 1.6s ease-in-out calc(var(--x) * 120ms) infinite;
+}
+.px-icon[data-anim='flicker'][data-entered] .px-dot {
+  animation: px-flicker 2.4s linear calc(var(--fr) * 2s) infinite;
+}
+.px-icon[data-anim='trail'][data-entered] .px-dot {
+  animation: px-trail calc(var(--px-n) * 0.35s) ease-in-out calc(var(--i) * 0.35s) infinite;
+}
+
+/* Hover scatter */
+.px-icon.px-icon[data-hovered][data-entered] .px-dot {
+  transform: translate3d(calc(var(--h1) * var(--px-cell) * 1.4), calc(var(--h2) * var(--px-cell) * 1.4), 0) rotate(45deg)
+    scale(0.7);
+  animation-play-state: paused;
+}
+
+/* Skip work for icons that are offscreen */
+.px-icon.px-icon.px-icon[data-visible='false'] :is(.px-cell, .px-dot) {
+  animation-play-state: paused;
+}
+
+@keyframes px-enter-assemble {
+  from {
+    opacity: 0;
+    translate: calc(var(--r1) * var(--px-cell) * 8) calc(var(--r2) * var(--px-cell) * 8);
+    rotate: calc(var(--r3) * 180deg);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes px-enter-drop {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--px-cell) * -4);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes px-enter-pop {
+  from {
+    opacity: 0;
+    scale: 0;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes px-wave {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, calc(var(--px-cell) * -0.4), 0);
+  }
+}
+@keyframes px-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+@keyframes px-trail {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Morphing grid */
+.px-morph-cell {
+  display: block;
+  background-color: #3a3a3a;
+  opacity: 0.15;
+  scale: 0.15;
+  rotate: 90deg;
+  backface-visibility: hidden;
+  transition:
+    scale 0.7s var(--px-spring-morph) var(--d),
+    rotate 0.7s var(--px-spring-morph) var(--d),
+    opacity 0.35s ease-out var(--d),
+    background-color 0.35s ease-out var(--d);
+}
+.px-morph-cell[data-on] {
+  background-color: var(--px-color);
+  opacity: 1;
+  scale: 1;
+  rotate: 0deg;
+}
+.px-morph-label {
+  animation: px-label-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes px-label-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-icon .px-cell,
+  .px-icon .px-dot,
+  .px-morph-label {
+    opacity: 1;
+    animation: none !important;
+  }
+  .px-icon .px-dot,
+  .px-morph-cell {
+    transform: none !important;
+    transition: none !important;
+  }
+}
