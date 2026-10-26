@@ -11,18 +11,24 @@ import {
 } from 'lucide-react'
 
 import {
-  type ProfileAnalytics,
   formatMinutes,
   localDayKey,
 } from '../components/Ui/analytics-data'
 
 import { ActivityHeatmap } from '../components/Ui/activity-heatmap'
+import { GRAIN_TEXTURE } from '../components/Ui/trend-chart'
 import { HeatmapSkeleton } from '../components/Ui/skeletons'
 import { PixelShape } from '../components/Ui/pixel-shape'
 import { getProductivityShape } from '../lib/productivity-shapes'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
+  type MonthlyFocus,
+  type MonthlyProductivity,
+  fetchFocusMonth,
+  fetchProductivityMonth,
   fetchProfileAnalytics,
+  selectFocusMonth,
+  selectProductivityMonth,
   selectProfileAnalytics,
 } from '../store/slices/analyticsSlice'
 import { updateUser } from '../store/slices/authSlice'
@@ -59,187 +65,187 @@ const monthLabel = (month: string) =>
 
 const NAME_PATTERN = /^[a-zA-Z\s]{2,50}$/
 
-/* --------------------------- productivity chart (unchanged) --------------------------- */
+/* ----------------------------- shared month UI ----------------------------- */
 
-function ProductivityCard({
-  monthly,
+const monthDayKeys = (month: string) => {
+  const [year, monthNumber] = month.split('-').map(Number)
+  const totalDays = new Date(year, monthNumber, 0).getDate()
+  return Array.from(
+    { length: totalDays },
+    (_, i) => `${month}-${String(i + 1).padStart(2, '0')}`,
+  )
+}
+
+function MonthToggle({
+  month,
   loading,
   onMonthChange,
 }: {
-  monthly: ProfileAnalytics["monthly"] | null;
-  loading: boolean;
-  onMonthChange: (month: string) => void;
+  month: string
+  loading: boolean
+  onMonthChange: (month: string) => void
 }) {
-  const [hover, setHover] = useState<number | null>(null);
+  const currentMonth = localDayKey().slice(0, 7)
+  return (
+    <div className="flex items-center overflow-hidden border border-soft">
+      <button
+        type="button"
+        aria-label="Previous month"
+        onClick={() => onMonthChange(shiftMonth(month, -1))}
+        disabled={loading}
+        className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+      >
+        <ChevronLeft className="size-4" />
+      </button>
 
-  const currentMonth = localDayKey().slice(0, 7);
-  const month = monthly?.month ?? currentMonth;
-  const days = monthly?.days ?? [];
+      <span className="flex h-8 min-w-[120px] items-center justify-center border-x border-soft px-3 font-inter! text-xs font-medium text-foreground">
+        {monthLabel(month)}
+      </span>
+
+      <button
+        type="button"
+        aria-label="Next month"
+        onClick={() => onMonthChange(shiftMonth(month, 1))}
+        disabled={loading || month >= currentMonth}
+        className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+      >
+        <ChevronRight className="size-4" />
+      </button>
+    </div>
+  )
+}
+
+function ChartTooltip({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="whitespace-nowrap border border-color bg-canvas px-3 py-2 text-caption shadow-[var(--shadow-card)]">
+      <div className="text-caption-bold text-primary">{title}</div>
+      <div className="mt-1 flex items-center gap-1.5 text-secondary">
+        <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function MonthAxis({ month }: { month: string }) {
+  const keys = monthDayKeys(month)
+  return (
+    <div className="mt-2 flex justify-between text-[11px] text-[#9a9ab0]">
+      <span>{fmtDay(keys[0])}</span>
+      <span>{fmtDay(keys[keys.length - 1])}</span>
+    </div>
+  )
+}
+
+/* --------------------------- productivity chart --------------------------- */
+
+function ProductivityCard({
+  month,
+  monthly: loadedMonthly,
+  loading,
+  onMonthChange,
+}: {
+  month: string
+  monthly: MonthlyProductivity | null
+  loading: boolean
+  onMonthChange: (month: string) => void
+}) {
+  const [hover, setHover] = useState<number | null>(null)
+
+  const monthly = loadedMonthly?.month === month ? loadedMonthly : null
+  const days = useMemo(() => monthly?.days ?? [], [monthly])
 
   const allDays = useMemo(() => {
-    const [year, monthNumber] = month.split("-").map(Number);
+    const daysMap = new Map(days.map((day) => [day.date.slice(0, 10), day]))
+    return monthDayKeys(month).map(
+      (date) => daysMap.get(date) ?? { date, completed: 0, focusMinutes: 0 },
+    )
+  }, [days, month])
 
-    const totalDays = new Date(
-      year,
-      monthNumber,
-      0,
-    ).getDate();
-
-    const daysMap = new Map(
-      days.map((day) => [day.date.slice(0, 10), day]),
-    );
-
-    return Array.from({ length: totalDays }, (_, index) => {
-      const dayNumber = index + 1;
-
-      const dateKey = [
-        year,
-        String(monthNumber).padStart(2, "0"),
-        String(dayNumber).padStart(2, "0"),
-      ].join("-");
-
-      const existing = daysMap.get(dateKey);
-
-      return (
-        existing ?? {
-          date: dateKey,
-          completed: 0,
-          focusMinutes: 0,
-        }
-      );
-    });
-  }, [days, month]);
-
-  const max = Math.max(
-    1,
-    ...allDays.map((day) => day.completed),
-  );
+  const max = Math.max(1, ...allDays.map((day) => day.completed))
 
   return (
-    <section
-      className="border border-soft p-5 sm:p-6"
-      aria-busy={loading}
-    >
+    <section className="border border-soft p-5 sm:p-6" aria-busy={loading}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3
-        id="heatmap-title"
-        className="text-heading-5 text-primary"
-      >
-        Daily productivity
-      </h3>
-         
-
+          <h3 className="text-heading-5 text-primary">Daily productivity</h3>
           <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
-            {monthly
-              ? `${monthly.avgTasksPerDay} tasks/day`
-              : "—"}
+            {monthly ? `${monthly.avgTasksPerDay} tasks/day` : '—'}
           </p>
-
         </div>
-
-       <div className="flex items-center overflow-hidden border border-soft">
-  <button
-    type="button"
-    aria-label="Previous month"
-    onClick={() => onMonthChange(shiftMonth(month, -1))}
-    disabled={loading}
-    className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-  >
-    <ChevronLeft className="size-4" />
-  </button>
-
-  <span className="flex h-8 min-w-[120px] items-center justify-center border-x border-soft px-3 font-inter! text-xs font-medium text-foreground">
-    {monthLabel(month)}
-  </span>
-
-  <button
-    type="button"
-    aria-label="Next month"
-    onClick={() => onMonthChange(shiftMonth(month, 1))}
-    disabled={loading || month >= currentMonth}
-    className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-  >
-    <ChevronRight className="size-4" />
-  </button>
-</div>
+        <MonthToggle month={month} loading={loading} onMonthChange={onMonthChange} />
       </div>
 
       <div
         className={`relative mt-6 flex h-36 items-end gap-[3px] transition-opacity ${
-          loading ? "opacity-40" : ""
+          loading ? 'opacity-40' : ''
         }`}
+        role="img"
+        aria-label={`${monthly?.totalCompleted ?? 0} tasks completed in ${monthLabel(month)}`}
       >
         {loading && days.length === 0 ? (
-          <p className="m-auto text-sm text-[#6b6b84]">
-            Loading…
-          </p>
+          <p className="m-auto text-sm text-[#6b6b84]">Loading…</p>
         ) : (
-          allDays.map((d, i) => (
-            <div
-              key={d.date}
-              className="group relative flex h-full min-w-0 flex-1 items-end"
-              onMouseEnter={() => setHover(i)}
-              onMouseLeave={() => setHover(null)}
-            >
+          allDays.map((d, i) => {
+            const active = hover === i
+            return (
               <div
-                className={`w-full rounded-t-sm transition-colors ${
-                  d.completed > 0
-                    ? "bg-[#6d4aff]/85 group-hover:bg-[#6d4aff]"
-                    : "bg-canvas"
-                }`}
-                style={{
-                  height:
-                    d.completed > 0
-                      ? `${Math.max(
-                          4,
-                          (d.completed / max) * 100,
-                        )}%`
-                      : "4px",
-                }}
-              />
+                key={d.date}
+                className="group relative flex h-full min-w-0 flex-1 items-end justify-center"
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(null)}
+              >
+                {d.completed > 0 ? (
+                  <div
+                    className={`relative w-full max-w-8 overflow-hidden rounded-t-[5px] bg-gradient-to-t from-primary/80 via-primary to-indigo-400 shadow-sm transition-all duration-500 ${
+                      active ? 'opacity-100 brightness-110 shadow-md' : 'opacity-95'
+                    }`}
+                    style={{ height: `${Math.max(4, (d.completed / max) * 100)}%` }}
+                  >
+                    <div
+                      className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-60 contrast-125"
+                      style={{ backgroundImage: GRAIN_TEXTURE }}
+                    />
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-white/40" />
+                  </div>
+                ) : (
+                  <div className="h-1 w-full max-w-8 rounded-t-[5px] bg-gradient-to-t from-zinc-700/30 via-zinc-500/25 to-zinc-300/35" />
+                )}
 
-              {hover === i && (
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#14142b] px-3 py-2 text-xs shadow-lg">
-                  <p className="font-semibold text-white">
-                    {d.completed}{" "}
-                    {d.completed === 1 ? "task" : "tasks"} ·{" "}
-                    {formatMinutes(d.focusMinutes)}
-                  </p>
-
-                  <p className="text-white/60">
-                    {fmtDay(d.date)}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))
+                {active && (
+                  <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2">
+                    <ChartTooltip title={fmtDay(d.date)}>
+                      {d.completed} {d.completed === 1 ? 'task' : 'tasks'} ·{' '}
+                      {formatMinutes(d.focusMinutes)}
+                    </ChartTooltip>
+                  </div>
+                )}
+              </div>
+            )
+          })
         )}
       </div>
 
-      {!loading || days.length > 0 ? (
-        <div className="mt-2 flex justify-between text-[11px] text-[#9a9ab0]">
-          <span>
-            {allDays.length > 0
-              ? fmtDay(allDays[0].date)
-              : ""}
-          </span>
-
-          <span>
-            {allDays.length > 0
-              ? fmtDay(allDays[allDays.length - 1].date)
-              : ""}
-          </span>
-        </div>
-      ) : null}
+      <MonthAxis month={month} />
     </section>
-  );
+  )
 }
 
+/* ------------------------------- focus chart ------------------------------- */
 
-/* ----------------------------- focus chart (unchanged) -------------------------------- */
-
-function FocusTimeCard({ focus }: { focus: ProfileAnalytics['focus30'] | null }) {
+function FocusTimeCard({
+  month,
+  focus: loadedFocus,
+  loading,
+  failed,
+  onMonthChange,
+}: {
+  month: string
+  focus: MonthlyFocus | null
+  loading: boolean
+  failed: boolean
+  onMonthChange: (month: string) => void
+}) {
   const W = 700
   const H = 220
   const PT = 18
@@ -247,9 +253,17 @@ function FocusTimeCard({ focus }: { focus: ProfileAnalytics['focus30'] | null })
   const PX = 10
   const ref = useRef<SVGSVGElement | null>(null)
   const [hover, setHover] = useState<number | null>(null)
-  const data = focus?.days ?? []
+
+  const focus = loadedFocus?.month === month ? loadedFocus : null
+  const today = localDayKey()
+  const allKeys = monthDayKeys(month)
+  const minutesByDay = new Map((focus?.days ?? []).map((d) => [d.date.slice(0, 10), d.minutes]))
+  const data = allKeys
+    .filter((date) => date <= today)
+    .map((date) => ({ date, minutes: minutesByDay.get(date) ?? 0 }))
+
   const max = Math.max(1, ...data.map((d) => d.minutes)) * 1.15
-  const stepX = data.length > 1 ? (W - PX * 2) / (data.length - 1) : 0
+  const stepX = allKeys.length > 1 ? (W - PX * 2) / (allKeys.length - 1) : 0
   const pts = data.map((d, i) => ({
     ...d,
     x: PX + i * stepX,
@@ -262,42 +276,35 @@ function FocusTimeCard({ focus }: { focus: ProfileAnalytics['focus30'] | null })
     pts.length > 1
       ? `${line} L${pts[pts.length - 1].x.toFixed(1)} ${H - PB} L${pts[0].x.toFixed(1)} ${H - PB} Z`
       : ''
-  const delta = focus?.delta ?? 0
 
   return (
-    <section className={`p-5 sm:p-6 border border-soft`}>
-      <div className="flex flex-wrap items-center gap-3">
+    <section className="border border-soft p-5 sm:p-6" aria-busy={loading}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3
-        id="heatmap-title"
-        className="text-heading-5 text-primary"
-      >
-        Focus time
-      </h3>
-        
-          <div className="mt-1 flex items-center gap-2.5">
-            <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
-              {focus ? formatMinutes(focus.totalMinutes) : '—'}
-            </p>
-            
-          </div>
+          <h3 className="text-heading-5 text-primary">Focus time</h3>
+          <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
+            {focus
+              ? `${formatMinutes(focus.avgMinutesPerDay)}/day · ${formatMinutes(focus.totalMinutes)} total`
+              : '—'}
+          </p>
         </div>
+        <MonthToggle month={month} loading={loading} onMonthChange={onMonthChange} />
       </div>
 
-      <div className="relative mt-4">
-        {pts.length > 1 ? (
+      <div className={`relative mt-4 transition-opacity ${loading ? 'opacity-40' : ''}`}>
+        {focus && pts.length > 0 ? (
           <svg
             ref={ref}
             viewBox={`0 0 ${W} ${H}`}
             className="h-auto w-full cursor-crosshair"
             role="img"
-            aria-label={`Focus time over the last 30 days: ${formatMinutes(focus?.totalMinutes ?? 0)} total`}
+            aria-label={`Focus time in ${monthLabel(month)}: ${formatMinutes(focus.totalMinutes)} total`}
             onMouseMove={(e) => {
               const rect = ref.current?.getBoundingClientRect()
-              if (!rect) return
+              if (!rect || stepX === 0) return
               const x = ((e.clientX - rect.left) / rect.width) * W
               const idx = Math.round((x - PX) / stepX)
-              setHover(Math.max(0, Math.min(data.length - 1, idx)))
+              setHover(Math.max(0, Math.min(pts.length - 1, idx)))
             }}
             onMouseLeave={() => setHover(null)}
           >
@@ -318,7 +325,7 @@ function FocusTimeCard({ focus }: { focus: ProfileAnalytics['focus30'] | null })
                 strokeDasharray="3 5"
               />
             ))}
-            <path d={area} fill="url(#focusFill)" />
+            {area && <path d={area} fill="url(#focusFill)" />}
             <path
               d={line}
               fill="none"
@@ -327,7 +334,10 @@ function FocusTimeCard({ focus }: { focus: ProfileAnalytics['focus30'] | null })
               strokeLinejoin="round"
               strokeLinecap="round"
             />
-            {hover !== null && (
+            {pts.length === 1 && hover === null && (
+              <circle cx={pts[0].x} cy={pts[0].y} r="4" fill="#6d4aff" />
+            )}
+            {hover !== null && pts[hover] && (
               <g>
                 <line
                   x1={pts[hover].x}
@@ -348,22 +358,39 @@ function FocusTimeCard({ focus }: { focus: ProfileAnalytics['focus30'] | null })
             )}
           </svg>
         ) : (
-          <div className="grid h-40 place-items-center text-sm text-[#6b6b84]">Loading…</div>
+          <div className="grid h-40 place-items-center text-sm text-[#6b6b84]">
+            {failed ? (
+              <button
+                type="button"
+                onClick={() => onMonthChange(month)}
+                className="border border-soft px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+              >
+                Couldn&apos;t load focus time. Try again
+              </button>
+            ) : loading ? (
+              'Loading…'
+            ) : (
+              'No focus data for this month'
+            )}
+          </div>
         )}
 
         {hover !== null && pts[hover] && (
           <div
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-[#14142b] px-3 py-2 text-xs shadow-lg"
+            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full"
             style={{
               left: `${(pts[hover].x / W) * 100}%`,
               top: `${(pts[hover].y / H) * 100 - 2}%`,
             }}
           >
-            <p className="font-semibold text-white">{formatMinutes(pts[hover].minutes)} focused</p>
-            <p className="text-white/60">{fmtDay(pts[hover].date)}</p>
+            <ChartTooltip title={fmtDay(pts[hover].date)}>
+              {formatMinutes(pts[hover].minutes)} focused
+            </ChartTooltip>
           </div>
         )}
       </div>
+
+      <MonthAxis month={month} />
     </section>
   )
 }
@@ -505,12 +532,14 @@ function EditProfileModal({
 export default function ProductivityProfile() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((s) => s.auth.user)
-  const { data, status, error, month } = useAppSelector(selectProfileAnalytics)
+  const { data, status, error } = useAppSelector(selectProfileAnalytics)
+  const productivity = useAppSelector(selectProductivityMonth)
+  const focus = useAppSelector(selectFocusMonth)
   const [editOpen, setEditOpen] = useState(false)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    dispatch(fetchProfileAnalytics(month ?? undefined))
+    dispatch(fetchProfileAnalytics(undefined))
   }, [dispatch])
 
   useEffect(() => {
@@ -572,7 +601,7 @@ export default function ProductivityProfile() {
             <span>{error ?? 'Could not load your profile analytics.'}</span>
             <button
               type="button"
-              onClick={() => dispatch(fetchProfileAnalytics(month ?? undefined))}
+              onClick={() => dispatch(fetchProfileAnalytics(undefined))}
               className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-rose-100"
             >
               Try again
@@ -636,11 +665,18 @@ export default function ProductivityProfile() {
             {data ? <ActivityHeatmap cells={data.heatmap} /> : <HeatmapSkeleton />}
           </div>
           <ProductivityCard
-            monthly={data?.monthly ?? null}
-            loading={loading}
-            onMonthChange={(m) => dispatch(fetchProfileAnalytics(m))}
+            month={productivity.month}
+            monthly={productivity.data}
+            loading={productivity.status === 'loading' || (loading && !productivity.data)}
+            onMonthChange={(m) => dispatch(fetchProductivityMonth(m))}
           />
-          <FocusTimeCard focus={data?.focus30 ?? null} />
+          <FocusTimeCard
+            month={focus.month}
+            focus={focus.data}
+            loading={focus.status === 'loading' || (loading && !focus.data)}
+            failed={focus.status === 'failed' || (status === 'failed' && !focus.data)}
+            onMonthChange={(m) => dispatch(fetchFocusMonth(m))}
+          />
         </section>
 
 

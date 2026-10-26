@@ -764,10 +764,12 @@ func (s *Server) analyticsProfile(w http.ResponseWriter, r *http.Request) {
 	m, _ := strconv.Atoi(month[5:])
 	monthEndKey := time.Date(y, time.Month(m)+1, 0, 0, 0, 0, 0, time.UTC).Format(dayLayout)
 	monthLastKey := min(monthEndKey, today)
+	prevMonthStartKey := time.Date(y, time.Month(m)-1, 1, 0, 0, 0, 0, time.UTC).Format(dayLayout)
+	prevMonthEndKey := shiftDay(monthStartKey, -1)
 
 	last30Start := shiftDay(today, -29)
 	prev30Start := shiftDay(today, -59)
-	earliestKey := min(yearStart, monthStartKey, prev30Start)
+	earliestKey := min(yearStart, prevMonthStartKey, prev30Start)
 
 	sessions, err := sessionsOverlapping(ctx, s.db, userID, dayStart(earliestKey, tz), dayStart(shiftDay(today, 1), tz))
 	if err != nil {
@@ -847,16 +849,29 @@ func (s *Server) analyticsProfile(w http.ResponseWriter, r *http.Request) {
 		cursor = shiftDay(cursor, -1)
 	}
 
+	// Month series always span the 1st through the last calendar day; days
+	// after today are zero. Averages only count days that have elapsed.
+	elapsedDays := daysBetween(monthStartKey, monthLastKey) + 1
 	monthDays := []monthDay{}
-	monthCompleted := 0
-	for k := monthStartKey; k <= monthLastKey; k = shiftDay(k, 1) {
-		monthDays = append(monthDays, monthDay{k, completedMap[k], toMinutes(focusMap[k])})
-		monthCompleted += completedMap[k]
+	monthFocusDays := []focusDay{}
+	monthCompleted, monthFocusTotal := 0, 0
+	for k := monthStartKey; k <= monthEndKey; k = shiftDay(k, 1) {
+		completed, minutes := 0, 0
+		if k <= monthLastKey {
+			completed, minutes = completedMap[k], toMinutes(focusMap[k])
+		}
+		monthDays = append(monthDays, monthDay{k, completed, minutes})
+		monthFocusDays = append(monthFocusDays, focusDay{k, minutes})
+		monthCompleted += completed
+		monthFocusTotal += minutes
 	}
 	avgTasksPerDay := 0.0
-	if len(monthDays) > 0 {
-		avgTasksPerDay = compat.Round(float64(monthCompleted)/float64(len(monthDays))*10) / 10
+	avgFocusMinutes := 0
+	if elapsedDays > 0 {
+		avgTasksPerDay = compat.Round(float64(monthCompleted)/float64(elapsedDays)*10) / 10
+		avgFocusMinutes = compat.RoundInt(float64(monthFocusTotal) / float64(elapsedDays))
 	}
+	prevMonthFocusTotal := toMinutes(sumRange(focusMap, prevMonthStartKey, prevMonthEndKey))
 
 	focusDays := []focusDay{}
 	focusTotal := 0
@@ -900,6 +915,11 @@ func (s *Server) analyticsProfile(w http.ResponseWriter, r *http.Request) {
 		"focus30": httpx.M{
 			"days": focusDays, "totalMinutes": focusTotal, "prevTotalMinutes": focusPrevTotal,
 			"delta": pctDelta(focusTotal, focusPrevTotal),
+		},
+		"focusMonth": httpx.M{
+			"month": month, "days": monthFocusDays, "totalMinutes": monthFocusTotal,
+			"avgMinutesPerDay": avgFocusMinutes, "prevTotalMinutes": prevMonthFocusTotal,
+			"delta": pctDelta(monthFocusTotal, prevMonthFocusTotal),
 		},
 		"projects":           projects,
 		"achievements":       achievements,

@@ -104,6 +104,14 @@ export type ProfileAnalytics = {
     prevTotalMinutes: number
     delta: number
   }
+  focusMonth?: {
+    month: string
+    days: { date: string; minutes: number }[]
+    totalMinutes: number
+    avgMinutesPerDay: number
+    prevTotalMinutes: number
+    delta: number
+  }
   projects: ProjectSummary[]
   achievements: Achievement[]
   currentAchievement: Achievement | null
