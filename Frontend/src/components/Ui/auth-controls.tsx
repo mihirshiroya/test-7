@@ -1,40 +1,7 @@
-import { useId, type ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 import { LoaderCircle } from 'lucide-react';
-import { Input as StyledInput } from './input';
 
-interface InputProps extends ComponentProps<'input'> {
-  label: string;
-  error?: string;
-  helperText?: string;
-}
-
-export function Input({ label, error, helperText, id, className = '', ...props }: InputProps) {
-  const generatedId = useId();
-  const inputId = id ?? generatedId;
-  const messageId = `${inputId}-message`;
-  const describedBy = [props['aria-describedby'], error || helperText ? messageId : undefined]
-    .filter(Boolean).join(' ') || undefined;
-
-  return (
-    <div className="auth-field" data-invalid={error ? true : undefined}>
-      <label htmlFor={inputId} className="auth-label ">
-        {label}
-      </label>
-      <StyledInput
-        {...props}
-        id={inputId}
-        className={`auth-input ${className}`}
-        aria-invalid={error ? true : props['aria-invalid']}
-        aria-describedby={describedBy}
-      />
-      {(error || helperText) && (
-        <p id={messageId} className={`auth-field-message ${error ? 'auth-field-error' : ''}`} role={error ? 'alert' : undefined}>
-          {error || helperText}
-        </p>
-      )}
-    </div>
-  );
-}
+export { TextField as Input } from './text-field';
 
 interface ButtonProps extends ComponentProps<'button'> {
   loading?: boolean;

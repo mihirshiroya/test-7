@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react"
 import {
-  addDays, addMonths, endOfMonth, endOfWeek, format, isBefore, isSameDay, isSameMonth,
+  addDays, addMonths, endOfMonth, endOfWeek, format, isAfter, isBefore, isSameDay, isSameMonth,
   isToday, isValid, parse, startOfDay, startOfMonth, startOfWeek, subMonths,
 } from "date-fns"
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, X } from "lucide-react"
 import { AnchoredPopover } from "./popup"
 
-// Value format matches the native datetime-local input: "yyyy-MM-ddTHH:mm".
-const VALUE_FORMAT = "yyyy-MM-dd'T'HH:mm"
+// Value formats match the native datetime-local / date inputs.
+const DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm"
+const DATE_FORMAT = "yyyy-MM-dd"
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1)
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5)
@@ -18,12 +19,16 @@ interface DateTimePickerProps {
   labelId?: string
   placeholder?: string
   minValue?: string
+  maxValue?: string
   defaultHour?: number
+  mode?: "datetime" | "date"
+  clearable?: boolean
+  className?: string
 }
 
-function parseValue(value: string): Date | null {
+function parseValue(value: string, valueFormat: string): Date | null {
   if (!value) return null
-  const d = parse(value, VALUE_FORMAT, new Date())
+  const d = parse(value, valueFormat, new Date())
   return isValid(d) ? d : null
 }
 
@@ -35,19 +40,33 @@ function buildMonthGrid(month: Date): Date[] {
   return days
 }
 
-export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick date & time", minValue, defaultHour = 9 }: DateTimePickerProps) {
+export function DateTimePicker({
+  value,
+  onChange,
+  labelId,
+  placeholder,
+  minValue,
+  maxValue,
+  defaultHour = 9,
+  mode = "datetime",
+  clearable = true,
+  className = "",
+}: DateTimePickerProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dialogId = useId()
   const [open, setOpen] = useState(false)
 
-  const selected = parseValue(value)
-  const minDate = parseValue(minValue ?? "")
+  const dateOnly = mode === "date"
+  const valueFormat = dateOnly ? DATE_FORMAT : DATETIME_FORMAT
+  const selected = parseValue(value, valueFormat)
+  const minDate = parseValue(minValue ?? "", valueFormat)
+  const maxDate = parseValue(maxValue ?? "", valueFormat)
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(selected ?? new Date()))
   const [draft, setDraft] = useState<Date | null>(selected)
 
   useEffect(() => {
     if (!open) return
-    const current = parseValue(value)
+    const current = parseValue(value, valueFormat)
     setDraft(current)
     setViewMonth(startOfMonth(current ?? minDate ?? new Date()))
     // Only re-sync when the popover opens.
@@ -55,6 +74,12 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
   }, [open])
 
   const close = useCallback(() => setOpen(false), [])
+
+  function isDisabledDay(day: Date) {
+    if (minDate && isBefore(day, startOfDay(minDate))) return true
+    if (maxDate && isAfter(startOfDay(day), startOfDay(maxDate))) return true
+    return false
+  }
 
   const hour24 = draft?.getHours() ?? defaultHour
   const minute = draft?.getMinutes() ?? 0
@@ -68,7 +93,15 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
     return d
   }
 
-  const pickDay = (day: Date) => setDraft(withTime(day, hour24, minute))
+  const pickDay = (day: Date) => {
+    if (dateOnly) {
+      onChange(format(day, DATE_FORMAT))
+      setOpen(false)
+      triggerRef.current?.focus()
+      return
+    }
+    setDraft(withTime(day, hour24, minute))
+  }
   const setHour12 = (h: number) => setDraft(withTime(draft ?? startOfDay(new Date()), (h % 12) + (isPM ? 12 : 0), minute))
   const setMinute = (m: number) => setDraft(withTime(draft ?? startOfDay(new Date()), hour24, m))
   const setMeridiem = (pm: boolean) => {
@@ -77,7 +110,7 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
   }
 
   const commit = () => {
-    onChange(draft ? format(draft, VALUE_FORMAT) : "")
+    onChange(draft ? format(draft, valueFormat) : "")
     setOpen(false)
     triggerRef.current?.focus()
   }
@@ -89,6 +122,10 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
 
   const jumpToNow = () => {
     const now = new Date()
+    if (dateOnly) {
+      if (!isDisabledDay(now)) pickDay(now)
+      return
+    }
     const rounded = withTime(now, now.getHours(), Math.ceil(now.getMinutes() / 5) * 5 % 60)
     if (now.getMinutes() > 55) rounded.setHours(rounded.getHours() + 1)
     setDraft(rounded)
@@ -96,12 +133,13 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
   }
 
   const days = buildMonthGrid(viewMonth)
-  const isDisabledDay = (day: Date) => (minDate ? isBefore(day, startOfDay(minDate)) : false)
-  const draftInvalid = !!(draft && minDate && isBefore(draft, minDate))
+  const draftTooEarly = !!(draft && minDate && isBefore(draft, minDate))
+  const draftTooLate = !!(draft && maxDate && isAfter(draft, maxDate))
+  const draftInvalid = draftTooEarly || draftTooLate
 
   return (
     <>
-      <div className="relative">
+      <div className={`relative ${className}`}>
         <button
           ref={triggerRef}
           type="button"
@@ -110,20 +148,24 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
           aria-controls={dialogId}
           aria-labelledby={labelId}
           onClick={() => setOpen((o) => !o)}
-          className={`flex h-9 w-full items-center gap-2.5 border border-soft bg-background px-3 pr-9 text-left text-sm outline-none transition hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring ${open ? "ring-2 ring-ring" : ""}`}
+          className={`flex h-9 w-full items-center gap-2.5 border border-soft bg-background px-3 ${clearable ? "pr-9" : "pr-3"} text-left text-sm outline-none transition hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring ${open ? "ring-2 ring-ring" : ""}`}
         >
           <CalendarDays size={16} aria-hidden className="shrink-0 text-muted-foreground" />
           {selected ? (
             <span className="flex min-w-0 items-center gap-2 truncate text-foreground">
               <span>{format(selected, "EEE, MMM d, yyyy")}</span>
-              <span aria-hidden className="h-3.5 w-px bg-border" />
-              <span className="text-muted-foreground">{format(selected, "h:mm a")}</span>
+              {!dateOnly && (
+                <>
+                  <span aria-hidden className="h-3.5 w-px bg-border" />
+                  <span className="text-muted-foreground">{format(selected, "h:mm a")}</span>
+                </>
+              )}
             </span>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground">{placeholder ?? (dateOnly ? "Pick a date" : "Pick date & time")}</span>
           )}
         </button>
-        {selected && (
+        {selected && clearable && (
           <button
             type="button"
             onClick={clear}
@@ -136,7 +178,7 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
       </div>
 
       <AnchoredPopover open={open} anchorRef={triggerRef} onClose={close} id={dialogId} className="w-[min(14.5rem,calc(100vw-1rem))]">
-        <div role="dialog" aria-label="Choose date and time" className="flex flex-col">
+        <div role="dialog" aria-label={dateOnly ? "Choose date" : "Choose date and time"} className="flex flex-col">
           <div className="flex items-center justify-between px-2 pb-1 pt-2">
             <button type="button" onClick={() => setViewMonth((m) => subMonths(m, 1))} aria-label="Previous month"
               className="grid h-6 w-6 place-items-center text-muted-foreground hover:bg-muted hover:text-foreground">
@@ -155,7 +197,8 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
 
           <div role="grid" className="grid grid-cols-7 px-2 pb-2">
             {days.map((day) => {
-              const isSelectedDay = draft ? isSameDay(day, draft) : false
+              const current = dateOnly ? selected : draft
+              const isSelectedDay = current ? isSameDay(day, current) : false
               const outside = !isSameMonth(day, viewMonth)
               const disabled = isDisabledDay(day)
               return (
@@ -182,6 +225,7 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
             })}
           </div>
 
+          {!dateOnly && (
           <div className="border-t border-soft px-2 py-2">
             <div className="flex items-stretch gap-1.5">
               <Clock size={12} aria-hidden className="mt-1 shrink-0 text-muted-foreground" />
@@ -203,17 +247,27 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
               </div>
             </div>
             {draftInvalid && (
-              <p role="alert" className="mt-1.5 text-[11px] text-destructive">Must be after the start date.</p>
+              <p role="alert" className="mt-1.5 text-[11px] text-destructive">
+                {draftTooEarly ? "Must be after the start date." : "Must be before the latest allowed date."}
+              </p>
             )}
           </div>
+          )}
 
           <div className="flex items-center gap-1 border-t border-soft px-2 py-1.5">
             <button type="button" onClick={jumpToNow} className="px-1.5 py-1 text-[11px] font-medium text-primary hover:bg-muted">
-              Now
+              {dateOnly ? "Today" : "Now"}
             </button>
-            <button type="button" onClick={() => setDraft(null)} className="px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted">
-              Clear
-            </button>
+            {clearable && (
+              <button
+                type="button"
+                onClick={dateOnly ? clear : () => setDraft(null)}
+                className="px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
+              >
+                Clear
+              </button>
+            )}
+            {!dateOnly && (
             <button
               type="button"
               onClick={commit}
@@ -222,6 +276,7 @@ export function DateTimePicker({ value, onChange, labelId, placeholder = "Pick d
             >
               Done
             </button>
+            )}
           </div>
         </div>
       </AnchoredPopover>

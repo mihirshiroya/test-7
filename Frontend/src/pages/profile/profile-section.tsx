@@ -27,6 +27,8 @@ import {
 
   Sparkles,
 
+  Trophy,
+
 } from 'lucide-react'
 
 import type { User } from '../../types'
@@ -63,7 +65,11 @@ function Bar({
 
   label,
 
+  fillColor,
+
 }: {
+
+  fillColor?: string
 
   value: number
 
@@ -95,7 +101,7 @@ function Bar({
 
     >
 
-      <div className={`h-full rounded-full ${fillClass}`} style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+      <div className={`h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none ${fillClass}`} style={{ width: `${Math.min(100, Math.max(0, value))}%`, background: fillColor }} />
 
     </div>
 
@@ -364,340 +370,249 @@ export function ProfileHeader({
 
 
 
+const TIER_NAMES = ['Initiate', 'Bronze', 'Silver', 'Gold', 'Diamond', 'Platinum', 'Legendary']
+
+const formatHours = (value: number) => value.toLocaleString('en-US', { maximumFractionDigits: 1 })
+
 export function AchievementsSection({ data }: { data: ProfileAnalytics | null }) {
-
   const [filter, setFilter] = useState<'All badges' | 'Unlocked' | 'Locked'>('All badges')
-
   const { hours, achievements, current } = getAchievements(data)
-
   const unlocked = achievements.filter((tier) => tier.unlocked).length
-
   const next = achievements.find((tier) => !tier.unlocked)
-
   const visible = achievements.filter(
-
     (tier) => filter === 'All badges' || (filter === 'Unlocked' ? tier.unlocked : !tier.unlocked),
-
   )
-
-
+  const collectionPct = achievements.length ? Math.round((unlocked / achievements.length) * 100) : 0
+  const nextColor = next?.color ?? current?.color ?? 'var(--color-primary)'
 
   return (
-
     <section
-
       aria-labelledby="profile-achievements-title"
-
       aria-busy={!data}
-
-      className="overflow-hidden border border-soft bg-background px-[25px] pt-[27px] text-[#f5f3f7]"
-
+      className="overflow-hidden border border-soft bg-background px-5 pt-6 pb-5 text-charcoal sm:px-[25px] sm:pt-[27px]"
     >
-
-      <div className="flex items-center justify-between gap-5">
-
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-
- <h3
-        id="heatmap-title"
-        className="text-heading-5 text-primary"
-      >
-        Your focus, crystallized.
-      </h3>
-
-          
-
+          <h3 id="profile-achievements-title" className="text-heading-5 text-charcoal">
+            Your focus, crystallized.
+          </h3>
           <p className="mt-1 text-body-sm text-steel !font-semibold !font-inter">
-
             Every hour is a step forward. Every gem tells your story.
-
           </p>
-
         </div>
 
-        <span className="flex items-center gap-[5px] border border-soft bg-secondary px-2.5 py-[7px] text-[10px] whitespace-nowrap text-[#a49ea9]">
-
-          <Diamond size={14} className="mr-[3px] text-[#d8b769]" />
-
-          <strong className="font-medium">{data ? unlocked : '—'}</strong> / {achievements.length}{' '}
-
-          unlocked
-
-        </span>
-
-      </div>
-
-
-
-      <div className="mt-[25px] flex items-center gap-3.5 border border-soft p-[18px]">
-
-        <div className="grid size-[39px] shrink-0 place-items-center border border-soft text-[#b49cdd]">
-
-          <Sparkles size={20} />
-
-        </div>
-
-        <div className="flex-1">
-
-          <span className="text-[9px] tracking-[1.4px] text-[#ab91ce]">
-
-            {next ? 'YOUR NEXT MILESTONE' : 'COLLECTION COMPLETE'}
-
-          </span>
-
-          <h3 className="text-[18px] font-bold text-primary">{next ? next.title : 'Legendary focus. Well earned.'}</h3>
-
-          <p className="mt-[5px] text-[9px] text-secondary">
-
-            {!data ? (
-
-              'Loading your focus journey…'
-
-            ) : next ? (
-
-              <>
-
-                <strong className="font-normal text-secondary">
-
-                  {Math.max(0, next.requiredHours - hours).toLocaleString('en-US', { maximumFractionDigits: 1 })} more
-
-                  hours
-
-                </strong>{' '}
-
-                to unlock your next spark.
-
-              </>
-
-            ) : (
-
-              'You have unlocked every focus milestone.'
-
-            )}
-
-          </p>
-
-        </div>
-
-        <div className="w-[190px] shrink-0">
-
-          <div className="mb-2 flex justify-between text-[11px] text-[#d4c7ec]">
-
-            <span>
-
-              {Math.floor(hours)} <small className="text-[10px] text-[#9588a8]">/ {next?.requiredHours ?? Math.floor(hours)} hrs</small>
-
+        <div className="flex items-center gap-3 border border-soft bg-canvas px-3 py-2">
+          <div
+            role="progressbar"
+            aria-label="Collection progress"
+            aria-valuenow={collectionPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            className="relative grid size-9 place-items-center rounded-full"
+            style={{
+              background: `conic-gradient(var(--color-primary) ${collectionPct * 3.6}deg, var(--color-border-soft) 0deg)`,
+            }}
+          >
+            <span className="grid size-7 place-items-center rounded-full bg-canvas">
+              <Trophy size={13} className="text-primary" aria-hidden="true" />
             </span>
-
-            <span>{Math.min(100, Math.floor(next?.progress ?? 100))}%</span>
-
           </div>
+          <div className="leading-tight">
+            <p className="text-sm font-semibold tabular-nums text-charcoal font-inter!">
+              {data ? unlocked : '—'}
+              <span className="text-steel font-normal"> / {achievements.length}</span>
+            </p>
+            <p className="text-[10px] tracking-wide text-steel">badges unlocked</p>
+          </div>
+        </div>
+      </div>
 
+      <div
+        className="relative mt-6 flex flex-col gap-4 overflow-hidden border border-soft bg-canvas p-4 sm:flex-row sm:items-center sm:p-[18px]"
+        style={{ backgroundImage: `radial-gradient(120% 140% at 0% 50%, ${mix(nextColor, 12)}, transparent 55%)` }}
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-3.5">
+          <span className="grid size-14 shrink-0 place-items-center" aria-hidden="true">
+            {next || current ? (
+              <AchievementGem
+                color={(next ?? current)!.color}
+                requiredHours={(next ?? current)!.requiredHours}
+                size={56}
+              />
+            ) : (
+              <Sparkles size={22} className="text-primary" />
+            )}
+          </span>
+          <div className="min-w-0">
+            <span className="text-[10px] font-semibold tracking-[1.4px] text-steel">
+              {next ? 'YOUR NEXT MILESTONE' : 'COLLECTION COMPLETE'}
+            </span>
+            <h4 className="truncate text-lg font-bold text-charcoal font-inter!">
+              {next ? next.title : 'Legendary focus. Well earned.'}
+            </h4>
+            <p className="mt-0.5 text-xs text-steel">
+              {!data ? (
+                'Loading your focus journey…'
+              ) : next ? (
+                <>
+                  <strong className="font-semibold text-charcoal">
+                    {formatHours(Math.max(0, next.requiredHours - hours))} more hours
+                  </strong>{' '}
+                  to unlock your next badge.
+                </>
+              ) : (
+                'You have unlocked every focus milestone.'
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full shrink-0 sm:w-[210px]">
+          <div className="mb-2 flex items-baseline justify-between text-xs tabular-nums text-charcoal">
+            <span className="font-semibold">
+              {formatHours(Math.floor(hours))}
+              <small className="ml-1 text-[10px] font-normal text-steel">
+                / {next?.requiredHours ?? Math.floor(hours)} hrs
+              </small>
+            </span>
+            <span className="font-semibold">{Math.min(100, Math.floor(next?.progress ?? 100))}%</span>
+          </div>
           <Bar
-
             value={next?.progress ?? 100}
-
             label="Next achievement progress"
-
+            className="h-1.5"
             trackClass="bg-background"
-
-            fillClass="bg-primary"
-
+            fillClass=""
+            fillColor={nextColor}
           />
-
-          <p className="mt-[7px] flex items-center justify-end gap-1 text-[8px] text-[#9c8fae]">
-
-            <Clock3 size={10} /> Total focus time
-
+          <p className="mt-2 flex items-center justify-end gap-1 text-[10px] text-steel">
+            <Clock3 size={11} aria-hidden="true" /> Total focus time
           </p>
-
         </div>
-
       </div>
 
-
-
-      <div className="mt-[23px] mb-[17px] flex items-center justify-between">
-
-        <div className="flex items-center gap-[5px]" role="group" aria-label="Filter achievements">
-
-          {(['All badges', 'Unlocked', 'Locked'] as const).map((tab) => (
-
-            <button
-
-              type="button"
-
-              key={tab}
-
-              aria-pressed={filter === tab}
-
-              onClick={() => setFilter(tab)}
-
-              className={`flex items-center gap-1.5 border px-2.5 py-1.5 text-[10px] transition-colors ${
-
-                filter === tab
-
-                  ? 'border-[#3a363f] bg-[#2b282f] text-white'
-
-                  : 'border-transparent text-secondary hover:text-white'
-
-              }`}
-
-            >
-
-              {tab}
-
-              {tab === 'Unlocked' && <span className="text-[8px] text-[#b7a0d3]">{unlocked}</span>}
-
-            </button>
-
-          ))}
-
+      <div className="mt-6 mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1 border border-soft bg-canvas p-1" role="group" aria-label="Filter achievements">
+          {(['All badges', 'Unlocked', 'Locked'] as const).map((tab) => {
+            const count = tab === 'Unlocked' ? unlocked : tab === 'Locked' ? achievements.length - unlocked : achievements.length
+            const active = filter === tab
+            return (
+              <button
+                type="button"
+                key={tab}
+                aria-pressed={active}
+                onClick={() => setFilter(tab)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium transition-colors font-inter! ${
+                  active ? 'bg-background text-charcoal shadow-sm' : 'text-steel hover:text-charcoal'
+                }`}
+              >
+                {tab}
+                <span className={`tabular-nums text-[10px] ${active ? 'text-primary' : 'text-stone'}`}>{count}</span>
+              </button>
+            )
+          })}
         </div>
 
-        <span className="flex items-center gap-[9px] text-[8px] tracking-[1.6px] text-[#77717e]">
-
-          THE COLLECTION <span className="h-px w-[25px] bg-[#39343f]" />
-
+        <span className="flex items-center gap-2 text-[10px] tracking-[1.6px] text-steel">
+          THE COLLECTION <span aria-hidden="true" className="h-px w-6 bg-[var(--color-border-soft)]" />
         </span>
-
       </div>
 
-
-
-      <div className="grid grid-cols-2 gap-[11px] sm:grid-cols-3 lg:grid-cols-4 mb-4">
-
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {visible.map((tier) => {
-
+          const index = achievements.indexOf(tier)
           const isCurrent = current?.id === tier.id
+          const accent = tier.color
 
           return (
-
-            <article
-
+            <li
               key={tier.id}
-
-              className={`group min-w-0 border-2 px-[18px] pt-[15px] pb-[18px] text-center transition-colors ${
-
-                isCurrent ? 'border-[#87703e] bg-background' : 'border-soft bg-transparent hover:border-[#65556d]'
-
-              }`}
-
+              className="group relative flex min-w-0 flex-col overflow-hidden border border-soft bg-canvas px-4 pt-3.5 pb-4 text-center transition-[border-color,transform] duration-300 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              style={{
+                borderColor: isCurrent ? accent : undefined,
+                backgroundImage: tier.unlocked
+                  ? `radial-gradient(90% 60% at 50% 38%, ${mix(accent, isCurrent ? 20 : 11)}, transparent 70%)`
+                  : undefined,
+              }}
             >
+              {tier.unlocked && (
+                <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5" style={{ background: accent }} />
+              )}
 
-              <div className="flex h-[13px] items-center justify-between text-[9px] text-[#827d86]">
-
+              <div className="flex items-center justify-between text-[10px] font-semibold tracking-wide">
                 {isCurrent ? (
-
-                  <span className="text-[9px] font-semibold tracking-[.7px] text-[#d8b365]">CURRENT BADGE</span>
-
+                  <span
+                    className="px-1.5 py-0.5 text-[9px] tracking-[.7px]"
+                    style={{ background: mix(accent, 18), color: accent }}
+                  >
+                    CURRENT
+                  </span>
                 ) : (
-
-                  <span className='text-primary'>{String(achievements.indexOf(tier) + 1).padStart(2, '0')}</span>
-
+                  <span className="text-stone tabular-nums">TIER {String(index + 1).padStart(2, '0')}</span>
                 )}
-
                 {tier.unlocked ? (
-
-                  <Check size={13} className="text-primary" />
-
+                  <span
+                    className="grid size-5 place-items-center rounded-full"
+                    style={{ background: mix(accent, 18), color: accent }}
+                  >
+                    <Check size={11} strokeWidth={3} aria-hidden="true" />
+                    <span className="sr-only">Unlocked</span>
+                  </span>
                 ) : (
-
-                  <LockKeyhole size={11} className="text-primary" />
-
+                  <span className="grid size-5 place-items-center rounded-full border border-soft text-steel">
+                    <LockKeyhole size={10} aria-hidden="true" />
+                    <span className="sr-only">Locked</span>
+                  </span>
                 )}
-
               </div>
-
-
 
               <Gem tier={tier} locked={!tier.unlocked} />
 
-
-
-              <h3 className="text-[13px] font-medium text-primary">{tier.title}</h3>
-
-              <p className="mt-[5px] text-[10px] text-[#99929f]">
-
-                Focus for {tier.requiredHours.toLocaleString()} hours
-
+              <p
+                className="text-[10px] font-semibold tracking-[1.2px] uppercase"
+                style={{ color: tier.unlocked ? accent : 'var(--color-stone)' }}
+              >
+                {TIER_NAMES[index] ?? 'Tier'}
               </p>
+              <h4 className="mt-0.5 truncate text-sm font-semibold text-charcoal font-inter!">{tier.title}</h4>
+              <p className="mt-1 text-[11px] text-steel">{tier.requiredHours.toLocaleString()} hrs of focus</p>
 
-
-
-              <div className="mt-3.5 flex h-3 items-center justify-center gap-[7px]">
-
+              <div className="mt-auto flex h-5 items-center justify-center gap-2 pt-3.5">
                 {tier.unlocked ? (
-
-                  <span
-
-                    className={`flex items-center font-semibold gap-1 text-[10px] ${isCurrent ? 'text-[#c4a264]' : 'text-[#918c96]'}`}
-
-                  >
-
-                    <CheckCheck size={12} /> Earned
-
+                  <span className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: accent }}>
+                    <CheckCheck size={13} aria-hidden="true" /> Earned
                   </span>
-
                 ) : (
-
                   <>
-
                     <Bar
-
                       value={tier.progress}
-
                       label={`${tier.title} progress`}
-
-                      className="h-[3px] w-[62%]"
-
+                      className="h-1 w-[65%]"
                       trackClass="bg-background"
-
-                      fillClass="bg-primary"
-
+                      fillClass=""
+                      fillColor={desaturatedFill(accent)}
                     />
-
-                    <span className="text-[8px] text-[#918c96]">{Math.floor(tier.progress)}%</span>
-
+                    <span className="text-[10px] tabular-nums text-steel">{Math.floor(tier.progress)}%</span>
                   </>
-
                 )}
-
               </div>
-
-            </article>
-
+            </li>
           )
-
         })}
-
-      </div>
-
-
+      </ul>
 
       {data && visible.length === 0 && (
-
-        <p className="px-2.5 py-[35px] text-center text-xs text-[#b2a9c0]">
-
+        <p className="px-2.5 py-9 text-center text-xs text-steel">
           {filter === 'Unlocked'
-
             ? 'Your first spark is waiting. Complete a focus session to get started.'
-
             : 'Every badge earned. What a journey.'}
-
         </p>
-
       )}
-
-
-
-
-
     </section>
-
   )
-
 }
+
+const desaturatedFill = (color: string) => `color-mix(in srgb, ${color} 70%, var(--color-steel))`
 
 
 

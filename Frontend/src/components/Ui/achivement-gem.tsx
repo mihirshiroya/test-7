@@ -1,10 +1,15 @@
 import { useId, useState } from 'react'
 
-type GemShape = 'spark' | 'diamond' | 'crown' | 'star'
+type GemShape = 'spark' | 'shield' | 'hexagon' | 'sun' | 'diamond' | 'crown' | 'star'
 
 type Facet = { points: string; tone: number }
 
+type Point = [number, number]
+
 const TIER_HOURS = [1, 10, 25, 50, 100, 250, 500]
+
+/** Each tier gets its own emblem so the collection reads as a progression. */
+const TIER_SHAPES: GemShape[] = ['spark', 'shield', 'hexagon', 'sun', 'diamond', 'crown', 'star']
 
 function hexToRgb(hex: string) {
   const clean = hex.replace('#', '')
@@ -30,7 +35,47 @@ function desaturate(hex: string) {
   return `#${[mix(r), mix(g), mix(b)].map((c) => c.toString(16).padStart(2, '0')).join('')}`
 }
 
-const pts = (list: [number, number][]) => list.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
+const pts = (list: Point[]) => list.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
+
+const polar = (cx: number, cy: number, radius: number, angle: number): Point => [
+  cx + radius * Math.cos(angle),
+  cy + radius * Math.sin(angle),
+]
+
+/** A faceted ring: outer polygon bevelled into an inner table facet. */
+function ringFacets(sides: number, outerR: number, innerR: number, tones: number[], cy = 60): Facet[] {
+  const start = -Math.PI / 2 - Math.PI / sides
+  const outer = Array.from({ length: sides }, (_, i) => polar(60, cy, outerR, start + (i * 2 * Math.PI) / sides))
+  const inner = Array.from({ length: sides }, (_, i) => polar(60, cy, innerR, start + (i * 2 * Math.PI) / sides))
+  const facets = outer.map((point, i) => {
+    const next = (i + 1) % sides
+    return { points: pts([point, outer[next], inner[next], inner[i]]), tone: tones[i % tones.length] }
+  })
+  return [...facets, { points: pts(inner), tone: 0.55 }]
+}
+
+/** A faceted star: every ray split into a lit and a shaded half. */
+function starFacets(rays: number, outerR: number, innerR: number, cy: number): Facet[] {
+  const step = Math.PI / rays
+  const facets: Facet[] = []
+  for (let i = 0; i < rays; i++) {
+    const angle = -Math.PI / 2 + i * 2 * step
+    const tip = polar(60, cy, outerR, angle)
+    const before = polar(60, cy, innerR, angle - step)
+    const after = polar(60, cy, innerR, angle + step)
+    const lift = 0.15 * Math.cos(i * 2 * step)
+    facets.push({ points: pts([[60, cy], before, tip]), tone: 0.55 + lift })
+    facets.push({ points: pts([[60, cy], tip, after]), tone: -0.15 + lift })
+  }
+  return facets
+}
+
+function fanFacets(outline: Point[], center: Point, tones: number[]): Facet[] {
+  return outline.map((point, i) => ({
+    points: pts([point, outline[(i + 1) % outline.length], center]),
+    tone: tones[i % tones.length],
+  }))
+}
 
 const SHAPES: Record<GemShape, Facet[]> = {
   spark: [
@@ -41,6 +86,13 @@ const SHAPES: Record<GemShape, Facet[]> = {
     { points: pts([[34, 78], [60, 82], [60, 108]]), tone: -0.45 },
     { points: pts([[86, 78], [60, 82], [60, 108]]), tone: -0.15 },
   ],
+  shield: fanFacets(
+    [[28, 26], [60, 14], [92, 26], [90, 64], [60, 106], [30, 64]],
+    [60, 54],
+    [0.6, 0.8, 0.3, -0.35, -0.1, 0.15],
+  ),
+  hexagon: ringFacets(6, 48, 26, [0.75, 0.35, -0.2, -0.45, -0.05, 0.5]),
+  sun: starFacets(8, 50, 30, 60),
   diamond: [
     { points: pts([[40, 28], [80, 28], [70, 48], [50, 48]]), tone: 0.8 },
     { points: pts([[16, 48], [40, 28], [50, 48]]), tone: 0.5 },
@@ -49,38 +101,45 @@ const SHAPES: Record<GemShape, Facet[]> = {
     { points: pts([[50, 48], [70, 48], [60, 108]]), tone: 0.4 },
     { points: pts([[70, 48], [104, 48], [60, 108]]), tone: -0.4 },
   ],
-  crown: octagonFacets(),
-  star: starFacets(),
+  crown: ringFacets(8, 34, 21, [0.7, 0.45, 0.15, -0.2, -0.45, -0.25, 0.05, 0.35], 74),
+  star: starFacets(5, 46, 19, 64),
 }
 
-function octagonFacets(): Facet[] {
-  const outer: [number, number][] = [[46, 40], [74, 40], [94, 60], [94, 84], [74, 104], [46, 104], [26, 84], [26, 60]]
-  const inner: [number, number][] = [[51, 54], [69, 54], [80, 65], [80, 79], [69, 90], [51, 90], [40, 79], [40, 65]]
-  const tones = [0.7, 0.45, 0.15, -0.2, -0.45, -0.25, 0.05, 0.35]
-  const facets = outer.map((point, i) => {
-    const next = (i + 1) % outer.length
-    return { points: pts([point, outer[next], inner[next], inner[i]]), tone: tones[i] }
-  })
-  return [...facets, { points: pts(inner), tone: 0.55 }]
-}
+/** Leaf positions in degrees along the lower-left arc (SVG: 90° points down). */
+const LAUREL_ANGLES = [205, 184, 163, 142, 121]
 
-function starFacets(): Facet[] {
-  const cx = 60
-  const cy = 62
-  const polar = (radius: number, step: number): [number, number] => {
-    const angle = -Math.PI / 2 + (step * Math.PI) / 5
-    return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]
+function Laurel({ color }: { color: string }) {
+  const arc = (side: 1 | -1) => {
+    const [x1, y1] = polar(60, 62, 50, ((side === 1 ? 212 : -32) * Math.PI) / 180)
+    const [x2, y2] = polar(60, 62, 50, ((side === 1 ? 112 : 68) * Math.PI) / 180)
+    return `M${x1.toFixed(1)} ${y1.toFixed(1)} A50 50 0 0 ${side === 1 ? 0 : 1} ${x2.toFixed(1)} ${y2.toFixed(1)}`
   }
-  const facets: Facet[] = []
-  for (let i = 0; i < 5; i++) {
-    const tip = polar(50, i * 2)
-    const before = polar(21, i * 2 - 1)
-    const after = polar(21, i * 2 + 1)
-    const lift = 0.15 * Math.cos((i * 2 * Math.PI) / 5)
-    facets.push({ points: pts([[cx, cy], before, tip]), tone: 0.55 + lift })
-    facets.push({ points: pts([[cx, cy], tip, after]), tone: -0.15 + lift })
-  }
-  return facets
+  return (
+    <g>
+      <path d={arc(1)} fill="none" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+      <path d={arc(-1)} fill="none" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+      <g fill={color}>
+        {([1, -1] as const).map((side) =>
+          LAUREL_ANGLES.map((deg, i) => {
+            const angleDeg = side === 1 ? deg : 180 - deg
+            const [x, y] = polar(60, 62, 52, (angleDeg * Math.PI) / 180)
+            const rotate = angleDeg + 90 - side * 28
+            return (
+              <ellipse
+                key={`${side}-${i}`}
+                cx={x}
+                cy={y}
+                rx="7"
+                ry="2.8"
+                transform={`rotate(${rotate.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})`}
+                opacity={0.6 + i * 0.1}
+              />
+            )
+          }),
+        )}
+      </g>
+    </g>
+  )
 }
 
 const SPARKLES: [number, number, number][] = [
@@ -114,7 +173,6 @@ function usePrefersReducedMotion() {
 
 export function AchievementGem({
   color,
-  icon,
   requiredHours,
   locked = false,
   size = 120,
@@ -129,12 +187,13 @@ export function AchievementGem({
 }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const reducedMotion = usePrefersReducedMotion()
-  const shape: GemShape = icon && icon in SHAPES ? (icon as GemShape) : 'spark'
   const rank = Math.max(0, TIER_HOURS.filter((hours) => hours <= requiredHours).length - 1)
+  const shape = TIER_SHAPES[rank] ?? 'spark'
   const base = locked ? desaturate(color) : color
   const animate = !locked && !reducedMotion
   const facets = SHAPES[shape]
-  const outline = shape === 'crown' ? SHAPES.crown.slice(0, 8) : facets
+  const edge = shade(base, locked ? 0.25 : 0.65)
+  const detail = shade(base, 0.8)
 
   return (
     <svg
@@ -156,7 +215,7 @@ export function AchievementGem({
           <stop offset="45%" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
         <clipPath id={`${id}-clip`}>
-          {outline.map((facet, i) => (
+          {facets.map((facet, i) => (
             <polygon key={i} points={facet.points} />
           ))}
         </clipPath>
@@ -164,7 +223,7 @@ export function AchievementGem({
 
       <circle cx="60" cy="60" r="58" fill={`url(#${id}-glow)`} />
 
-      {!locked && rank >= 4 && (
+      {!locked && rank >= 4 && shape !== 'star' && (
         <g opacity="0.35" stroke={shade(base, 0.4)} strokeWidth="1" strokeLinecap="round">
           {Array.from({ length: 12 }, (_, i) => {
             const angle = (i * Math.PI) / 6
@@ -184,7 +243,7 @@ export function AchievementGem({
         </g>
       )}
 
-      {!locked && rank >= 3 && (
+      {!locked && rank >= 2 && rank !== 6 && (
         <circle
           cx="60"
           cy="60"
@@ -200,26 +259,48 @@ export function AchievementGem({
       {!locked && <ellipse cx="60" cy="112" rx="26" ry="3" fill={shade(base, -0.6)} opacity="0.45" />}
 
       <g opacity={locked ? 0.4 : 1}>
+        {shape === 'star' && <Laurel color={shade(base, locked ? 0 : 0.3)} />}
+
         {facets.map((facet, i) => (
           <polygon
             key={i}
             points={facet.points}
             fill={shade(base, facet.tone)}
-            stroke={shade(base, locked ? 0.25 : 0.65)}
+            stroke={edge}
             strokeOpacity={locked ? 0.5 : 0.7}
             strokeWidth="0.75"
             strokeLinejoin="round"
           />
         ))}
 
-        {shape === 'crown' && (
-          <path
-            d="M36 36 L40 16 L50 27 L60 12 L70 27 L80 16 L84 36 Z"
-            fill={shade(base, 0.55)}
-            stroke={shade(base, 0.8)}
+        {shape === 'shield' && (
+          <polygon
+            points={pts([[46, 38], [60, 33], [74, 38], [73, 58], [60, 80], [47, 58]])}
+            fill={shade(base, 0.45)}
+            stroke={edge}
             strokeWidth="0.75"
             strokeLinejoin="round"
           />
+        )}
+
+        {shape === 'sun' && (
+          <circle cx="60" cy="60" r="12" fill={shade(base, 0.6)} stroke={detail} strokeWidth="1" />
+        )}
+
+        {shape === 'crown' && (
+          <>
+            <path
+              d="M30 46 L36 18 L48 32 L60 12 L72 32 L84 18 L90 46 Z"
+              fill={shade(base, 0.45)}
+              stroke={detail}
+              strokeWidth="0.75"
+              strokeLinejoin="round"
+            />
+            <path d="M30 46 L90 46" stroke={detail} strokeWidth="1.2" />
+            {[[36, 18], [60, 12], [84, 18]].map(([cx, cy]) => (
+              <circle key={cx} cx={cx} cy={cy} r="3" fill={detail} />
+            ))}
+          </>
         )}
 
         {!locked && (

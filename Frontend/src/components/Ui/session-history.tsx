@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
-import { ArrowRight, CalendarDays, Clock3, Target, Layers, RefreshCw } from "lucide-react"
+import { ArrowRight, Clock3, Target, Layers, RefreshCw } from "lucide-react"
 import { cn } from "../../lib/utills"
 import { chartColor, sum, useCountUp } from "../../lib/chart-utils"
 import {
@@ -14,7 +14,7 @@ import { SessionGantt } from "./session-gantt"
 import { ThemedSvg } from "../../lib/svg-theme"
 import noResultsRaw from "../../assets/31-no-results.svg?raw"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from './empty'
-import { Input } from './input'
+import { DateTimePicker } from './date-time-picker'
 import { localDayKey } from "./analytics-data"
 import { useAppDispatch, useAppSelector } from "../../store"
 import { fetchSessions, selectSessions } from "../../store/slices/analyticsSlice"
@@ -65,33 +65,13 @@ export function SessionHistory() {
   // Task currently hovered in the donut chart or the task list
   const [activeTask, setActiveTask] = useState<string | null>(null)
 
-  const dateInputRef = useRef<HTMLInputElement>(null)
-
   // --------------------------------------------------
   // Date picker
   // --------------------------------------------------
 
-  const handleDateChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const date = event.target.value
+  const handleDateChange = (date: string) => {
     if (!date || date > today) return
     dispatch(fetchSessions(date))
-  }
-
-  const openDatePicker = () => {
-    const input = dateInputRef.current
-
-    if (!input) return
-
-    // Supported browsers
-    if (typeof input.showPicker === "function") {
-      input.showPicker()
-    } else {
-      // Fallback
-      input.focus()
-      input.click()
-    }
   }
 
   // --------------------------------------------------
@@ -178,34 +158,15 @@ export function SessionHistory() {
         </div>
 
         {/* Date picker */}
-        <div className="relative flex items-center gap-3 font-mono text-4xl font-semibold tabular-nums text-foreground">
-          
-
-          <button
-            type="button"
-            onClick={openDatePicker}
-            className="group flex items-center gap-2 text-sm tracking-wide capitalize font-semibold font-inter! text-steel transition-colors hover:text-foreground"
-            aria-label={`Select date. Current date is ${dateLabel}`}
-          >
-            <CalendarDays
-              className="h-3.5 w-3.5 transition-colors group-hover:text-foreground"
-              aria-hidden="true"
-            />
-
-            <span>{dateLabel}</span>
-          </button>
-
-          <Input
-            ref={dateInputRef}
-            type="date"
-            value={selectedDate}
-            max={today}
-            onChange={handleDateChange}
-            className="sr-only"
-            aria-hidden="true"
-            tabIndex={-1}
-          />
-        </div>
+        <DateTimePicker
+          mode="date"
+          value={selectedDate}
+          maxValue={today}
+          onChange={handleDateChange}
+          clearable={false}
+          className="w-full font-inter! sm:w-64"
+          placeholder={dateLabel}
+        />
       </header>
 
       {status === "failed" && (

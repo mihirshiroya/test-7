@@ -19,6 +19,7 @@ import { ActivityHeatmap } from '../components/Ui/activity-heatmap'
 import { GRAIN_TEXTURE } from '../components/Ui/trend-chart'
 import { HeatmapSkeleton } from '../components/Ui/skeletons'
 import { PixelShape } from '../components/Ui/pixel-shape'
+import { TextField } from '../components/Ui/text-field'
 import { getProductivityShape } from '../lib/productivity-shapes'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
@@ -439,9 +440,6 @@ function EditProfileModal({
     }
   }
 
-  const inputCls =
-    'h-11 bg-[#f7f7fc] px-3.5 text-sm font-normal text-[#14142b] outline-none transition-shadow focus:border-[#6d4aff] focus:bg-white focus:ring-4 focus:ring-[#6d4aff]/15'
-
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-background p-4 backdrop-blur-sm"
@@ -474,25 +472,19 @@ function EditProfileModal({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="flex flex-col gap-2 text-sm font-medium text-[#14142b]">
-            First name
-            <input
-              autoFocus
-              value={draft.firstName}
-              maxLength={50}
-              onChange={(e) => setDraft({ ...draft, firstName: e.target.value })}
-              className={inputCls}
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-medium text-[#14142b]">
-            Last name
-            <input
-              value={draft.lastName}
-              maxLength={50}
-              onChange={(e) => setDraft({ ...draft, lastName: e.target.value })}
-              className={inputCls}
-            />
-          </label>
+          <TextField
+            label="First name"
+            autoFocus
+            value={draft.firstName}
+            maxLength={50}
+            onChange={(e) => setDraft({ ...draft, firstName: e.target.value })}
+          />
+          <TextField
+            label="Last name"
+            value={draft.lastName}
+            maxLength={50}
+            onChange={(e) => setDraft({ ...draft, lastName: e.target.value })}
+          />
         </div>
 
         <p className="mt-3 text-xs text-[#6b6b84]">
