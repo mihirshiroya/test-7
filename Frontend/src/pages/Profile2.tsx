@@ -7,8 +7,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  X,
+  UserRound,
 } from 'lucide-react'
+import { AppDialog, AppDialogButton, AppDialogSection } from '../components/Ui/app-dialog'
 
 import {
   formatMinutes,
@@ -416,14 +417,6 @@ function EditProfileModal({
   const valid = NAME_PATTERN.test(firstName) && NAME_PATTERN.test(lastName)
   const unchanged = firstName === user.firstName && lastName === user.lastName
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !saving) onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, saving])
-
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!valid || saving) return
@@ -441,36 +434,29 @@ function EditProfileModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-background p-4 backdrop-blur-sm"
-      onClick={() => !saving && onClose()}
+    <AppDialog
+      open
+      onClose={onClose}
+      onSubmit={save}
+      dismissible={!saving}
+      title="Edit profile"
+      description="Update your personal profile information."
+      footer={
+        <>
+          <AppDialogButton variant="secondary" onClick={onClose} disabled={saving}>
+            Cancel
+          </AppDialogButton>
+          <AppDialogButton type="submit" disabled={!valid || saving}>
+            {saving ? 'Saving…' : 'Save changes'}
+          </AppDialogButton>
+        </>
+      }
     >
-      <form
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-profile-title"
-        className="w-full max-w-md bg-white p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={save}
+      <AppDialogSection
+        icon={<UserRound />}
+        title="Your name"
+        description="This is how you appear across the app."
       >
-        <div className="mb-5 flex items-start justify-between">
-          <div>
-            <h3 id="edit-profile-title" className="text-lg font-semibold text-[#14142b]">
-              Edit profile
-            </h3>
-            <p className="mt-1 text-sm text-[#6b6b84]">Update your personal profile information.</p>
-          </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={onClose}
-            disabled={saving}
-            className="grid size-8 place-items-center rounded-lg text-[#6b6b84] hover:bg-[#f0f0f7] hover:text-[#14142b]"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
             label="First name"
@@ -487,7 +473,7 @@ function EditProfileModal({
           />
         </div>
 
-        <p className="mt-3 text-xs text-[#6b6b84]">
+        <p className="mt-3 text-xs text-steel">
           {error ? (
             <span role="alert" className="text-rose-600">
               {error}
@@ -496,26 +482,8 @@ function EditProfileModal({
             '2–50 characters, letters and spaces only.'
           )}
         </p>
-
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="px-4 py-2.5 text-sm font-medium text-[#6b6b84] hover:bg-[#f0f0f7] hover:text-[#14142b]"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!valid || saving}
-            className=" bg-[#6d4aff] px-4 py-2.5 text-sm font-medium text-white shadow-[0_4px_12px_rgba(109,74,255,0.3)] hover:bg-[#5b38f0] disabled:opacity-50 disabled:shadow-none"
-          >
-            {saving ? 'Saving…' : 'Save changes'}
-          </button>
-        </div>
-      </form>
-    </div>
+      </AppDialogSection>
+    </AppDialog>
   )
 }
 

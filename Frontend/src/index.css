@@ -1992,6 +1992,26 @@ select::-webkit-scrollbar-thumb:hover {
   font-family: 'Outfit', sans-serif;
 }
 
+/* Non-<input> controls (selects, date pickers, textareas) sized to match .text-field-input */
+.text-field-control {
+  height: auto;
+  min-height: 38px;
+  border: 1px solid var(--auth-line, var(--color-border-soft));
+  border-radius: 0;
+  background: var(--auth-paper, var(--color-background));
+  color: var(--auth-ink, var(--color-charcoal));
+  font-size: 12px;
+  box-shadow: none;
+  outline: none;
+  transition: border-color 150ms;
+}
+.text-field-control:focus-visible,
+.text-field-control[aria-expanded='true'] { border-color: var(--color-primary); }
+textarea.text-field-input { min-height: 96px; line-height: 1.5; resize: none; }
+@media (max-width: 767px) {
+  .text-field-control { font-size: 16px; min-height: 44px; }
+}
+
 
 .robot { position: relative; display: inline-block; flex-shrink: 0; vertical-align: middle; --look-x: 0px; --look-y: 0px; --eye-color: #e7fff2; }
 .stage { position: absolute; width: 100px; height: 100px; left: 0; top: 0; transform: scale(var(--robot-scale, 1)); transform-origin: top left; }

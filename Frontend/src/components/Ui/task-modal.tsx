@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
-import { TextField } from './text-field'
+import { Input } from './input'
 import { CustomSelect } from "./custom-select"
 import type { SelectOption } from "./custom-select"
 import { DateTimePicker } from "./date-time-picker.tsx"
@@ -102,7 +102,10 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
           <div className="flex flex-col gap-5">
 
             {/* Title */}
-            <TextField ref={titleRef} label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" />
+            <label className={labelClass}>
+              <span className="text-sm font-medium text-foreground font-inter!">Title</span>
+              <Input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" className={fieldClass} />
+            </label>
 
             {/* Description */}
             <label className={labelClass}>
@@ -119,7 +122,10 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
                 <CustomSelect value={priority} options={PRIORITY_OPTIONS} onChange={setPriority} labelId="task-priority-label" />
               </div>
 
-              <TextField type="number" label="Planned duration (min)" min={1} value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+              <label className={labelClass}>
+                <span className="text-sm font-medium text-foreground font-inter!">Planned duration (min)</span>
+                <Input type="number" min={1} value={minutes} onChange={(e) => setMinutes(e.target.value)} className={`${fieldClass} h-9`} />
+              </label>
             </div>
 
             {/* Start date */}

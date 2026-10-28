@@ -1,9 +1,13 @@
-
-import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Palette, Shapes, Type } from 'lucide-react'
 
 import { cn } from '../../lib/utills'
-import { Button } from './Button'
+import {
+  AppDialog,
+  AppDialogButton,
+  AppDialogSection,
+  appDialogInputClass,
+} from './app-dialog'
 
 import {
   FOLDER_TINTS,
@@ -22,11 +26,8 @@ export type FolderDraft = {
 type FolderDialogProps = {
   open: boolean
   mode: 'create' | 'edit'
-
   initial?: Folder
-
   onClose: () => void
-
   onSubmit?: (draft: FolderDraft) => void
 }
 
@@ -42,217 +43,112 @@ export function FolderDialog({
   const [icon, setIcon] = useState<IconKey>('folder')
 
   useEffect(() => {
-    if (!open) {
-      return
-    }
+    if (!open) return
 
     setTitle(initial?.title ?? '')
     setTint(initial?.tint ?? 'blue')
     setIcon(initial?.icon ?? 'folder')
   }, [open, initial])
 
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [open, onClose])
-
-  if (!open) {
-    return null
-  }
-
   const canSubmit = title.trim().length > 0
 
-  function submit() {
-    if (!canSubmit || !onSubmit) {
-      return
-    }
-
-    onSubmit({
-      title: title.trim(),
-      tint,
-      icon,
-    })
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    if (!canSubmit || !onSubmit) return
+    onSubmit({ title: title.trim(), tint, icon })
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Close dialog"
-        onClick={onClose}
-        className="absolute inset-0 bg-background backdrop-blur-[2px]"
-      />
+    <AppDialog
+      open={open}
+      onClose={onClose}
+      onSubmit={submit}
+      title={mode === 'create' ? 'New folder' : 'Rename folder'}
 
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="relative w-full max-w-md border border-soft bg-canvas p-6 shadow-2xl"
+      footer={
+        <>
+          <AppDialogButton variant="secondary" onClick={onClose}>
+            Cancel
+          </AppDialogButton>
+          <AppDialogButton type="submit" disabled={!canSubmit}>
+            {mode === 'create' ? 'Create folder' : 'Save changes'}
+          </AppDialogButton>
+        </>
+      }
+    >
+      <AppDialogSection
+        icon={<Type />}
+        title="Folder name"
+        description="Helps you find these notes later."
+        htmlFor="folder-title"
       >
-        {/* HEADER */}
-
-        <div className="mb-5 flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-ink font-inter!">
-              {mode === 'create' ? 'New folder' : 'Rename folder'}
-            </h2>
-
-            <p className="mt-1 text-sm text-steel">
-              {mode === 'create'
-                ? 'Give your folder a name, color and icon.'
-                : 'Update the folder details.'}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex size-8 items-center justify-center rounded-lg text-steel hover:bg-gray-tint hover:text-ink"
-          >
-            <X className="size-[18px]" />
-          </button>
-        </div>
-
-        {/* NAME */}
-
-        <label
-          htmlFor="folder-title"
-          className="mb-1.5 block text-sm font-medium text-charcoal font-inter!"
-        >
-          Folder name
-        </label>
-
         <input
           id="folder-title"
           autoFocus
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          onKeyDown={(event) => {
-            if (
-              event.key === 'Enter' &&
-              !event.nativeEvent.isComposing
-            ) {
-              submit()
-            }
-          }}
           placeholder="e.g. Product specs"
-          className="h-11 w-full border border-soft bg-background px-3.5 text-sm text-ink outline-none placeholder:text-stone focus:border-primary"
+          className={appDialogInputClass}
         />
+      </AppDialogSection>
 
-        {/* COLOR */}
+      <AppDialogSection icon={<Palette />} title="Color" description="Pick an accent for this folder.">
+        <div className="flex flex-wrap gap-2.5">
+          {(Object.keys(FOLDER_TINTS) as TintKey[]).map((key) => {
+            const color = FOLDER_TINTS[key]
+            const selected = tint === key
 
-        <p className="mt-5 mb-2 text-sm font-medium text-charcoal font-inter!">
-          Color
-        </p>
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-label={`Color ${key}`}
+                aria-pressed={selected}
+                onClick={() => setTint(key)}
+                className={cn(
+                  'size-8 rounded-full border transition-transform hover:scale-110',
+                  selected ? 'scale-105 ring-2 ring-primary ring-offset-2' : '',
+                )}
+                style={{
+                  backgroundColor: color.bg,
+                  borderColor: color.fg,
+                  // @ts-expect-error CSS custom property
+                  '--tw-ring-offset-color': 'var(--color-canvas)',
+                }}
+              />
+            )
+          })}
+        </div>
+      </AppDialogSection>
 
+      <AppDialogSection icon={<Shapes />} title="Icon" description="Choose a symbol that fits.">
         <div className="flex flex-wrap gap-2">
-          {(Object.keys(FOLDER_TINTS) as TintKey[]).map(
-            (key) => {
-              const color = FOLDER_TINTS[key]
-              const selected = tint === key
+          {(Object.keys(FOLDER_ICONS) as IconKey[]).map((key) => {
+            const Icon = FOLDER_ICONS[key]
+            const selected = icon === key
 
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-label={`Color ${key}`}
-                  aria-pressed={selected}
-                  onClick={() => setTint(key)}
-                  className={cn(
-                    'size-8 rounded-full border transition-transform hover:scale-110',
-                    selected
-                      ? 'scale-105 ring-2 ring-primary ring-offset-4'
-                      : '',
-                  )}
-                  style={{
-                    backgroundColor: color.bg,
-                    borderColor: color.fg,
-                    // @ts-expect-error CSS custom property
-                    '--tw-ring-offset-color': 'var(--canvas)',
-                  }}
-                />
-              )
-            },
-          )}
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-label={`Icon ${key}`}
+                aria-pressed={selected}
+                onClick={() => setIcon(key)}
+                className={cn(
+                  'flex size-10 items-center justify-center rounded-lg border border-soft transition-colors',
+                  selected ? 'text-primary' : 'text-steel hover:bg-gray-tint hover:text-ink',
+                )}
+                style={{
+                  backgroundColor: selected ? FOLDER_TINTS[tint].bg : 'transparent',
+                  borderColor: selected ? FOLDER_TINTS[tint].fg : '',
+                }}
+              >
+                <Icon className="size-5" />
+              </button>
+            )
+          })}
         </div>
-
-        {/* ICON */}
-
-        <p className="mt-5 mb-2 text-sm font-medium text-charcoal font-inter!">
-          Icon
-        </p>
-
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(FOLDER_ICONS) as IconKey[]).map(
-            (key) => {
-              const Icon = FOLDER_ICONS[key]
-              const selected = icon === key
-
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-label={`Icon ${key}`}
-                  aria-pressed={selected}
-                  onClick={() => setIcon(key)}
-                  className={cn(
-                    'flex size-10 items-center justify-center border border-soft transition-colors',
-                    selected
-                      ? 'text-primary'
-                      : 'text-steel hover:bg-gray-tint hover:text-ink',
-                  )}
-                  style={{
-                    backgroundColor: selected
-                      ? FOLDER_TINTS[tint].bg
-                      : 'transparent',
-                    borderColor: selected
-                      ? FOLDER_TINTS[tint].fg
-                      : '',
-                  }}
-                >
-                  <Icon className="size-5" />
-                </button>
-              )
-            },
-          )}
-        </div>
-
-        {/* FOOTER */}
-
-        <div className="mt-7 flex justify-end gap-2">
-          <Button
-            size="lg"
-            onClick={onClose}
-            className="bg-background border border-soft font-inter! text-steel"
-          >
-            Cancel
-          </Button>
-
-          <Button
-            size="lg"
-            disabled={!canSubmit}
-            onClick={submit}
-            className="bg-primary text-on-primary hover:bg-primary-pressed font-inter!"
-          >
-            {mode === 'create'
-              ? 'Create folder'
-              : 'Save changes'}
-          </Button>
-        </div>
-      </div>
-    </div>
+      </AppDialogSection>
+    </AppDialog>
   )
 }

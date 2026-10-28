@@ -24,6 +24,7 @@ interface DateTimePickerProps {
   mode?: "datetime" | "date"
   clearable?: boolean
   className?: string
+  triggerClassName?: string
 }
 
 function parseValue(value: string, valueFormat: string): Date | null {
@@ -51,6 +52,7 @@ export function DateTimePicker({
   mode = "datetime",
   clearable = true,
   className = "",
+  triggerClassName = "",
 }: DateTimePickerProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dialogId = useId()
@@ -148,7 +150,7 @@ export function DateTimePicker({
           aria-controls={dialogId}
           aria-labelledby={labelId}
           onClick={() => setOpen((o) => !o)}
-          className={`flex h-9 w-full items-center gap-2.5 border border-soft bg-background px-3 ${clearable ? "pr-9" : "pr-3"} text-left text-sm outline-none transition hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring ${open ? "ring-2 ring-ring" : ""}`}
+          className={`flex h-9 w-full items-center gap-2.5 border border-soft bg-background px-3 ${clearable ? "pr-9" : "pr-3"} text-left text-sm outline-none transition hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring ${open ? "ring-2 ring-ring" : ""} ${triggerClassName}`}
         >
           <CalendarDays size={16} aria-hidden className="shrink-0 text-muted-foreground" />
           {selected ? (

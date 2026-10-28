@@ -1,4 +1,4 @@
-import { useId, type ComponentProps } from 'react';
+import { useId, type ComponentProps, type ReactNode } from 'react';
 import { cn } from '../../lib/utills';
 import { Input } from './input';
 
@@ -46,6 +46,45 @@ export function TextField({
           {error || helperText}
         </p>
       )}
+    </div>
+  );
+}
+
+export interface FormFieldProps {
+  label: string;
+  /** Applied to the label so custom controls can reference it via aria-labelledby. */
+  labelId: string;
+  children: ReactNode;
+  className?: string;
+}
+
+/** Same label + spacing as TextField, for custom controls (selects, date pickers). */
+export function FormField({ label, labelId, children, className }: FormFieldProps) {
+  return (
+    <div className={cn('text-field', className)}>
+      <span id={labelId} className="text-field-label">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+export interface TextAreaFieldProps extends ComponentProps<'textarea'> {
+  label: string;
+  containerClassName?: string;
+}
+
+export function TextAreaField({ label, id, className, containerClassName, ...props }: TextAreaFieldProps) {
+  const generatedId = useId();
+  const textareaId = id ?? generatedId;
+
+  return (
+    <div className={cn('text-field', containerClassName)}>
+      <label htmlFor={textareaId} className="text-field-label">
+        {label}
+      </label>
+      <textarea {...props} id={textareaId} className={cn('text-field-input', className)} />
     </div>
   );
 }

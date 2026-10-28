@@ -20,8 +20,10 @@ import {
   ChevronDownIcon,
   Plus,
   Search,
+  Trash2,
   X,
 } from "lucide-react"
+import { AppDialog, AppDialogButton } from "./app-dialog"
 
 import noResultsRaw from "../../assets/31-no-results.svg?raw"
 import { ThemedSvg } from "../../lib/svg-theme"
@@ -822,53 +824,31 @@ export function KanbanBoard({
       {/* Delete Modal                                                           */}
       {/* ---------------------------------------------------------------------- */}
 
-      {deletingTask && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-task-title"
-        >
-          <div className="w-full max-w-sm border border-soft bg-canvas p-6 shadow-2xl">
-            <h2
-              id="delete-task-title"
-              className="text-lg font-semibold text-foreground"
-            >
-              Delete task?
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              This will permanently
-              delete “
-              {deletingTask.title}
-              ”. This action cannot
-              be undone.
-            </p>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setDeletingTask(null)
-                }
-                className="border border-soft px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  confirmDelete
-                }
-                className="bg-error px-3 py-2 text-sm font-medium text-error-foreground hover:opacity-90"
-              >
-                Delete task
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AppDialog
+        open={deletingTask !== null}
+        onClose={() => setDeletingTask(null)}
+        role="alertdialog"
+        size="sm"
+        title="Delete task?"
+        description={
+          <>
+            This will permanently delete{' '}
+            <span className="font-semibold text-ink">&ldquo;{deletingTask?.title}&rdquo;</span>.
+            This action can&apos;t be undone.
+          </>
+        }
+        footer={
+          <>
+            <AppDialogButton variant="secondary" onClick={() => setDeletingTask(null)}>
+              Cancel
+            </AppDialogButton>
+            <AppDialogButton variant="destructive" onClick={confirmDelete}>
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete task
+            </AppDialogButton>
+          </>
+        }
+      />
     </>
   )
 }

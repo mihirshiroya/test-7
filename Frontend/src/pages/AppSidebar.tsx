@@ -34,6 +34,11 @@ import {
   type ProjectDraft,
 } from '../components/Ui/project-dialog'
 import {
+  AppDialog,
+  AppDialogButton,
+  AppDialogSection,
+} from '../components/Ui/app-dialog'
+import {
   FOLDER_TINTS,
   FOLDER_ICONS,
   DEFAULT_TINT,
@@ -711,85 +716,45 @@ function AppSidebar() {
         />
 
         {/* Delete workspace modal */}
-        {deleteProject && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <button
-              type="button"
-              aria-label="Close dialog"
-              onClick={() => setDeleteProject(null)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-            />
-
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="delete-project-title"
-              aria-describedby="delete-project-desc"
-              className="relative w-full max-w-md border border-soft bg-canvas p-6 shadow-2xl"
-            >
-              <div className="mb-5 flex items-start justify-between">
-                <div>
-                  <h2
-                    id="delete-project-title"
-                    className="text-lg font-semibold text-ink"
-                  >
-                    Delete workspace
-                  </h2>
-
-                  <p id="delete-project-desc" className="mt-0.5 text-sm text-steel">
-                    This action cannot be undone. All tasks in this workspace will
-                    be deleted too.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setDeleteProject(null)}
-                  aria-label="Close"
-                  className="flex size-8 items-center justify-center rounded-lg text-steel transition-colors hover:bg-gray-tint hover:text-ink"
-                >
-                  <X className="size-[18px]" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: 'rgb(var(--color-card-tint-red))' }}
-                >
-                  <Trash2 className="text-danger" size={20} aria-hidden="true" />
-                </div>
-
-                <p className="text-sm text-steel">
-                  Are you sure you want to delete{' '}
-                  <span className="font-medium text-ink">
-                    "{deleteProject.label}"
-                  </span>
-                  ?
-                </p>
-              </div>
-
-              <div className="mt-7 flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setDeleteProject(null)}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={saving}
-                  onClick={handleDeleteConfirm}
-                >
-                  Delete workspace
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <AppDialog
+          open={deleteProject !== null}
+          onClose={() => setDeleteProject(null)}
+          dismissible={!saving}
+          role="alertdialog"
+          size="sm"
+          title="Delete workspace"
+          description={
+            <>
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-ink">&ldquo;{deleteProject?.label}&rdquo;</span>?
+            </>
+          }
+          footer={
+            <>
+              <AppDialogButton
+                variant="secondary"
+                onClick={() => setDeleteProject(null)}
+                disabled={saving}
+              >
+                Cancel
+              </AppDialogButton>
+              <AppDialogButton
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={saving}
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+                {saving ? 'Deleting…' : 'Delete workspace'}
+              </AppDialogButton>
+            </>
+          }
+        >
+          <AppDialogSection
+            icon={<Trash2 />}
+            title="This can't be undone"
+            description="All tasks in this workspace will be permanently deleted too."
+          />
+        </AppDialog>
       </div>
     </div>
   )

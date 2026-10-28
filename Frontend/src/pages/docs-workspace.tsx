@@ -5,6 +5,12 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { DocsNavTree } from '../components/Ui/docs-nav-tree'
 import { DocsEmptyState } from '../components/Ui/docs-empty-set.tsx'
 import {
+  AppDialog,
+  AppDialogButton,
+  AppDialogSection,
+  appDialogInputClass,
+} from '../components/Ui/app-dialog'
+import {
   ChevronRight,
   FileText,
   Plus,
@@ -1082,176 +1088,176 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       )}
 
       {/* DELETE MODAL */}
-      {deleteModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setDeleteModal(null)
-          }}
-        >
-          <div
-            className={`w-full max-w-lg border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
-          >
-            <div className={`flex items-center justify-between border-b pb-4 ${LINE}`}>
-              <h2 className={`text-lg font-bold capitalize ${INK}`}>Delete {deleteModal.type}</h2>
-
-              <button
-                type="button"
-                onClick={() => setDeleteModal(null)}
-                className={`rounded-lg p-1.5 transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
-                aria-label="Close delete confirmation"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="py-5">
-              <p className={`text-sm leading-relaxed ${INK}`}>
-                Are you sure you want to delete{' '}
-                <span className="font-semibold">&ldquo;{deleteModal.title}&rdquo;</span>?
-              </p>
-
-              {deleteModal.type === 'topic' && (
-                <p className={`mt-2 text-xs leading-relaxed ${MUTED}`}>
-                  This will also delete all subtopics and content inside this topic.
-                </p>
-              )}
-
-              {deleteModal.type === 'subtopic' && (
-                <p className={`mt-2 text-xs leading-relaxed ${MUTED}`}>
-                  This will also delete all content blocks inside this subtopic.
-                </p>
-              )}
-            </div>
-
-            <div className={`flex justify-end gap-2.5 border-t pt-4 ${LINE}`}>
-              <button
-                type="button"
-                onClick={() => setDeleteModal(null)}
-                className={` px-4 py-2 text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={confirmDelete}
-                className={`inline-flex items-center gap-2  bg-red-600 px-5 py-2 text-xs font-semibold text-white shadow-md transition-colors hover:bg-red-500 ${FOCUS}`}
-              >
-                <Trash2 className="size-3.5" />
-                Delete {deleteModal.type}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AppDialog
+        open={deleteModal !== null}
+        onClose={() => setDeleteModal(null)}
+        role="alertdialog"
+        size="sm"
+        title={<span className="capitalize">Delete {deleteModal?.type}</span>}
+        description={
+          <>
+            Are you sure you want to delete{' '}
+            <span className="font-semibold text-ink">&ldquo;{deleteModal?.title}&rdquo;</span>?
+          </>
+        }
+        footer={
+          <>
+            <AppDialogButton variant="secondary" onClick={() => setDeleteModal(null)}>
+              Cancel
+            </AppDialogButton>
+            <AppDialogButton variant="destructive" onClick={confirmDelete} className="capitalize">
+              <Trash2 className="size-4" />
+              Delete {deleteModal?.type}
+            </AppDialogButton>
+          </>
+        }
+      >
+        {deleteModal && deleteModal.type !== 'content' && (
+          <AppDialogSection
+            icon={<Trash2 />}
+            title="This can't be undone"
+            description={
+              deleteModal.type === 'topic'
+                ? 'All subtopics and content inside this topic will also be deleted.'
+                : 'All content blocks inside this subtopic will also be deleted.'
+            }
+          />
+        )}
+      </AppDialog>
 
       {/* CREATE MODAL */}
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
-          <div
-            className={`w-full max-w-lg border p-4 shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
-          >
-            <div className={`flex items-center justify-between border-b pb-4 ${LINE}`}>
-              <h2 className={`text-lg font-bold capitalize font-inter! ${INK}`}>Create New {modal}</h2>
+      <AppDialog
+        open={modal !== null}
+        onClose={resetModal}
+        onSubmit={add}
+        size="lg"
+        title={<span className="capitalize">Create new {modal}</span>}
+        description={
+          modal === 'topic'
+            ? `Add a new topic to your ${meta.label} docs.`
+            : modal === 'subtopic'
+              ? 'Add a new subtopic inside the selected topic.'
+              : 'Add a text or code block to the selected subtopic.'
+        }
+        footer={
+          <>
+            <AppDialogButton variant="secondary" onClick={resetModal}>
+              Cancel
+            </AppDialogButton>
+            <AppDialogButton
+              type="submit"
+              disabled={!title.trim() || (modal === 'content' && !content.trim())}
+              className="capitalize"
+            >
+              Create {modal}
+            </AppDialogButton>
+          </>
+        }
+      >
+        <AppDialogSection
+          icon={<FileText />}
+          title="Title"
+          description="A short, descriptive name."
+          htmlFor="docs-create-title"
+        >
+          <input
+            id="docs-create-title"
+            autoFocus
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className={appDialogInputClass}
+            placeholder={
+              modal === 'topic'
+                ? `e.g., ${meta.label} Advanced Concepts`
+                : modal === 'subtopic'
+                  ? 'e.g., Error Handling'
+                  : 'e.g., Example Code'
+            }
+          />
+        </AppDialogSection>
 
-              <button
-                type="button"
-                onClick={resetModal}
-                aria-label="Close"
-                className={`rounded-lg p-1.5 transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <form className="mt-5 flex flex-col gap-4" onSubmit={add}>
-              <label className={`flex flex-col gap-1.5 text-xs font-semibold ${INK}`}>
-                Title
-                <input
-                  autoFocus
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  className={`${FIELD} ${LINE} ${INK}`}
-                  placeholder={
-                    modal === 'topic'
-                      ? `e.g., ${meta.label} Advanced Concepts`
-                      : modal === 'subtopic'
-                        ? 'e.g., Error Handling'
-                        : 'e.g., Example Code'
-                  }
-                />
-              </label>
-
-              {modal === 'content' && (
-                <>
-                  <div className="flex flex-col gap-1.5">
-                    <span className={`text-xs font-semibold ${INK}`}>Block Type</span>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      {(
-                        [
-                          { value: 'text', label: 'Text / Paragraph', Icon: AlignLeft },
-                          { value: 'code', label: 'Code Snippet', Icon: Terminal },
-                        ] as const
-                      ).map(({ value, label: optionLabel, Icon }) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setContentType(value)}
-                          aria-pressed={contentType === value}
-                          className={`flex items-center justify-center gap-2 border p-2.5 text-xs font-semibold transition-all ${FOCUS} ${
-                            contentType === value
-                              ? `border-docs-accent ring-2 ring-docs-accent/20 ${ACTIVE} ${ACCENT}`
-                              : `${LINE} ${SOFT} ${MUTED} ${HOVER_ACTIVE}`
-                          }`}
-                        >
-                          <Icon className="size-4" />
-                          <span>{optionLabel}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <label className={`flex flex-col gap-1.5 text-xs font-semibold ${INK}`}>
-                    {contentType === 'code' ? `Code Body (${meta.label})` : 'Content Paragraph'}
-
-                    <textarea
-                      value={content}
-                      onChange={(event) => setContent(event.target.value)}
-                      rows={6}
-                      className={`resize-none p-3 font-mono ${FIELD} ${LINE} ${INK}`}
-                      placeholder={
-                        contentType === 'code'
-                          ? codePlaceholder
-                          : 'Write your documentation explanation here...'
-                      }
+        {modal === 'content' && (
+          <>
+            <fieldset className="flex flex-col gap-3">
+              <legend className="mb-3 text-sm font-semibold text-ink font-inter!">Block type</legend>
+              {(
+                [
+                  {
+                    value: 'text',
+                    label: 'Text / Paragraph',
+                    hint: 'Plain explanation or documentation prose.',
+                    Icon: AlignLeft,
+                  },
+                  {
+                    value: 'code',
+                    label: 'Code Snippet',
+                    hint: `A ${meta.label} code example with syntax highlighting.`,
+                    Icon: Terminal,
+                  },
+                ] as const
+              ).map(({ value, label: optionLabel, hint, Icon }) => {
+                const selected = contentType === value
+                return (
+                  <label
+                    key={value}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border bg-canvas p-4 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary ${
+                      selected ? 'border-primary' : 'border-soft hover:bg-gray-tint'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full border border-soft bg-surface text-charcoal"
+                    >
+                      <Icon className="size-[18px]" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-ink font-inter!">
+                        {optionLabel}
+                      </span>
+                      <span className="mt-0.5 block text-sm text-steel">{hint}</span>
+                    </span>
+                    <input
+                      type="radio"
+                      name="docs-block-type"
+                      value={value}
+                      checked={selected}
+                      onChange={() => setContentType(value)}
+                      className="sr-only"
                     />
+                    <span
+                      aria-hidden="true"
+                      className={`mt-2 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                        selected ? 'border-primary' : 'border-soft bg-gray-tint'
+                      }`}
+                    >
+                      {selected && <span className="size-2.5 rounded-full bg-primary" />}
+                    </span>
                   </label>
-                </>
-              )}
+                )
+              })}
+            </fieldset>
 
-              <div className={`mt-2 flex justify-end gap-2.5 border-t pt-4 ${LINE}`}>
-                <button
-                  type="button"
-                  onClick={resetModal}
-                  className={`px-4 py-2 font-inter! text-xs font-medium transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={!title.trim() || (modal === 'content' && !content.trim())}
-                  className={`cursor-pointer font-inter! px-5 py-2 text-xs font-semibold ${PRIMARY_BTN} ${FOCUS}`}
-                >
-                  Create {modal}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <AppDialogSection
+              icon={contentType === 'code' ? <Terminal /> : <AlignLeft />}
+              title={contentType === 'code' ? `Code body (${meta.label})` : 'Content paragraph'}
+              htmlFor="docs-create-content"
+            >
+              <textarea
+                id="docs-create-content"
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                rows={6}
+                className={`${appDialogInputClass} h-auto resize-none py-3 font-mono`}
+                placeholder={
+                  contentType === 'code'
+                    ? codePlaceholder
+                    : 'Write your documentation explanation here...'
+                }
+              />
+            </AppDialogSection>
+          </>
+        )}
+      </AppDialog>
     </div>
   )
 }
