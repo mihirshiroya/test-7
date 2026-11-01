@@ -10,9 +10,8 @@ import {
   Timer,
   type LucideIcon,
 } from 'lucide-react';
-import logo from '../../assets/logo.png';
 import halftoneBackground from '../../assets/auth-halftone.png';
-import textlogo from '../../assets/text-logo.png';
+  import { DottedText } from './dotted-text';
 import getstarted from '../../assets/28-get-started.svg?raw';
 import { ThemedSvg } from "../../lib/svg-theme"
 
@@ -203,15 +202,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         <div className="auth-background" style={backgroundStyle} aria-hidden="true" />
         {/* Card */}
         <div className="auth-card">
-          <div className="w-full flex items-center justify-center gap-3 mb-6">
-  
-
-  <img
-    src={textlogo}
-    alt="Workspace"
-    className="h-8 w-auto object-contain"
-  />
-</div>
+          <div className="mb-6 flex w-full items-center justify-center">
+                       <h3 className="text-heading-1 text-black text-pretty tracking-wider">Consistent</h3>
+          </div>
           {/* Inner bordered box with handles wrapping the form */}
           <div className="auth-form-frame">
             <CornerHandles />

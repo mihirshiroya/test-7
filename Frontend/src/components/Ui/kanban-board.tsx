@@ -52,6 +52,8 @@ import {
 
 import { PixelShape } from './pixel-shape.tsx'
 import { BOX_GLYPH, CHECK_GLYPH, KANBAN, PALETTE, PAUSE_GLYPH, type KanbanCard } from '../../lib/consistency.ts'
+import { CustomSelect, type SelectOption } from "./custom-select"
+
 
 interface KanbanBoardProps {
   /**
@@ -102,6 +104,11 @@ export function KanbanBoard({
   const [period, setPeriod] =
     useState<"day" | "week" | "month">("week")
 
+    const PERIOD_OPTIONS: SelectOption<"day" | "week" | "month">[] = [
+  { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+]
   const completedIdsRef =
     useRef<Set<string>>(new Set())
 
@@ -660,62 +667,16 @@ export function KanbanBoard({
             )}
           </div>
 
-          {/* Period Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className="inline-flex h-10 shrink-0 font-inter! items-center gap-2 border border-soft bg-card/60 px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Change task period"
-            >
-              <span>
-                {periodLabel}
-              </span>
-
-              <ChevronDownIcon className="size-3.5 text-muted-foreground" />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-              align="end"
-              sideOffset={6}
-              className="w-32"
-            >
-              <DropdownMenuRadioGroup
-                value={period}
-                onValueChange={(
-                  value,
-                ) => {
-                  if (value) {
-                    setPeriod(
-                      value as
-                        | "day"
-                        | "week"
-                        | "month",
-                    )
-                  }
-                }}
-              >
-                <DropdownMenuRadioItem
-                  value="month"
-                  className="text-xs font-inter!"
-                >
-                  Month
-                </DropdownMenuRadioItem>
-
-                <DropdownMenuRadioItem
-                  value="week"
-                  className="text-xs font-inter!"
-                >
-                  Week
-                </DropdownMenuRadioItem>
-
-                <DropdownMenuRadioItem
-                  value="day"
-                  className="text-xs font-inter!"
-                >
-                  Day
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+         {/* Period Selector */}
+<div className="w-[140px] shrink-0">
+  <CustomSelect
+    value={period}
+    options={PERIOD_OPTIONS}
+    onChange={setPeriod}
+    labelId="kanban-period-label"
+    className="bg-canvas font-medium text-primary"
+  />
+</div>
 
           {/* Create Task */}
           {/* {workspaceId !== null && ( */}

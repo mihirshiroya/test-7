@@ -97,11 +97,11 @@ function Bar({
 
       aria-valuemax={100}
 
-      className={`h-1 overflow-hidden rounded-full ${trackClass} ${className} border border-soft`}
+      className={`h-1 overflow-hidden ${trackClass} ${className} border border-soft`}
 
     >
 
-      <div className={`h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none ${fillClass}`} style={{ width: `${Math.min(100, Math.max(0, value))}%`, background: fillColor }} />
+      <div className={`h-full transition-[width] duration-500 motion-reduce:transition-none ${fillClass}`} style={{ width: `${Math.min(100, Math.max(0, value))}%`, background: fillColor }} />
 
     </div>
 
@@ -401,7 +401,7 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
           </p>
         </div>
 
-        <div className="flex items-center gap-3 border border-soft bg-canvas px-3 py-2">
+        <div className="flex items-center gap-3 border border-soft px-3 py-2">
           <div
             role="progressbar"
             aria-label="Collection progress"
@@ -422,7 +422,7 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
               {data ? unlocked : '—'}
               <span className="text-steel font-normal"> / {achievements.length}</span>
             </p>
-            <p className="text-[10px] tracking-wide text-steel">badges unlocked</p>
+            <p className="text-[12px] tracking-wide text-steel">badges unlocked</p>
           </div>
         </div>
       </div>
@@ -503,7 +503,7 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
                 aria-pressed={active}
                 onClick={() => setFilter(tab)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium transition-colors font-inter! ${
-                  active ? 'bg-background text-charcoal shadow-sm' : 'text-steel hover:text-charcoal'
+                  active ? 'bg-primary text-charcoal shadow-sm' : 'text-steel hover:text-charcoal'
                 }`}
               >
                 {tab}
@@ -527,12 +527,12 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
           return (
             <li
               key={tier.id}
-              className="group relative flex min-w-0 flex-col overflow-hidden border border-soft bg-canvas px-4 pt-3.5 pb-4 text-center transition-[border-color,transform] duration-300 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="group relative flex min-w-0 flex-col overflow-hidden border border-soft px-4 pt-3.5 pb-4 text-center transition-[border-color,transform] duration-300 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               style={{
                 borderColor: isCurrent ? accent : undefined,
                 backgroundImage: tier.unlocked
                   ? `radial-gradient(90% 60% at 50% 38%, ${mix(accent, isCurrent ? 20 : 11)}, transparent 70%)`
-                  : undefined,
+                  : '',
               }}
             >
               {tier.unlocked && (

@@ -60,7 +60,7 @@ export function TodaysTasks() {
   const tasks = useTodayTasks()
 
   const completedCount = tasks.filter(
-    (task) => task.status === "completed" || task.completedAt != null,
+    (task) => task.status === "COMPLETED" || task.completedAt != null,
   ).length
 
   const pct =
@@ -118,7 +118,7 @@ export function TodaysTasks() {
         <div className="relative z-10 mt-4 min-h-0 flex-1 overflow-y-auto pr-1 no-scrollbar">
           <div className="flex flex-col gap-4">
             {tasks.map((task) => {
-              const done = task.status === "completed" || task.completedAt != null
+              const done = task.status === "COMPLETED" || task.completedAt != null
 
               const deadlineInfo = getDaysLeftText(task.deadlineDate)
 

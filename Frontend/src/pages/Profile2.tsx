@@ -298,7 +298,7 @@ function FocusTimeCard({
           <svg
             ref={ref}
             viewBox={`0 0 ${W} ${H}`}
-            className="h-auto w-full cursor-crosshair"
+            className="h-auto w-full"
             role="img"
             aria-label={`Focus time in ${monthLabel(month)}: ${formatMinutes(focus.totalMinutes)} total`}
             onMouseMove={(e) => {
@@ -440,7 +440,6 @@ function EditProfileModal({
       onSubmit={save}
       dismissible={!saving}
       title="Edit profile"
-      description="Update your personal profile information."
       footer={
         <>
           <AppDialogButton variant="secondary" onClick={onClose} disabled={saving}>

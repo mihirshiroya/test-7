@@ -7,13 +7,7 @@ import { useAppDispatch, useAppSelector } from "../store"
 import { fetchOverview, selectOverview } from "../store/slices/analyticsSlice"
 import { selectTasks } from "../store/slices/taskSlice"
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "../components/Ui/dropdown-menu"
+import { CustomSelect, type SelectOption } from "../components/Ui/custom-select"
 
 import { StatCard } from "../components/Ui/stat-card"
 import { TrendChart } from "../components/Ui/trend-chart"
@@ -31,6 +25,11 @@ import {
 const POLL_MS = 60_000
 const TASK_CHANGE_DEBOUNCE_MS = 800
 
+const MODE_OPTIONS: SelectOption<ComparisonMode>[] = [
+  { value: "today", label: "Today" },
+  { value: "week", label: "This Week" },
+]
+
 function getGreeting(name: string) {
   const hour = new Date().getHours()
   if (hour < 12) return `Good morning, ${name}`
@@ -46,7 +45,6 @@ export default function Overview() {
   const tasks = useSelector(selectTasks)
 
   const [mode, setMode] = useState<ComparisonMode>("today")
-  const [open, setOpen] = useState(false)
 
   // Re-fetch whenever a task is created, moved, started, held or completed.
   const tasksSignature = useMemo(
@@ -85,43 +83,18 @@ export default function Overview() {
           <div className="flex items-center gap-2">
           
 
-            <DropdownMenu open={open} onOpenChange={setOpen}>
-              <DropdownMenuTrigger
-                type="button"
-                className="inline-flex h-9 min-w-[110px] items-center justify-between gap-2 border border-soft bg-canvas px-3 text-sm font-medium text-primary outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <span>{mode === "today" ? "Today" : "This Week"}</span>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                  className="opacity-60"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" className="w-[140px]">
-                <DropdownMenuRadioGroup
-                  value={mode}
-                  onValueChange={(value) => {
-                    if (value === "today" || value === "week") {
-                      setMode(value)
-                      setOpen(false)
-                    }
-                  }}
-                >
-                  <DropdownMenuRadioItem value="today">Today</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="week">This Week</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <span id="overview-range-label" className="sr-only">
+              Time range
+            </span>
+            <div className="w-[140px]">
+              <CustomSelect
+                value={mode}
+                options={MODE_OPTIONS}
+                onChange={setMode}
+                labelId="overview-range-label"
+                className="bg-canvas font-medium text-primary"
+              />
+            </div>
           </div>
         </header>
 

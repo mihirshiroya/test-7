@@ -1575,10 +1575,24 @@ export function useActiveTask() {
   }
 }
 
+function startOfLocalDay(ms: number) {
+  const d = new Date(ms)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
 export function useTodayTasks() {
   const tasks = useSelector(selectTasks)
+  const todayStart = startOfLocalDay(Date.now())
 
   return useMemo(() => {
-    return tasks
-  }, [tasks])
+    return tasks.filter((task) => {
+      const taskDay = startOfLocalDay(task.startDate ?? task.deadlineDate ?? task.createdAt)
+      if (taskDay === todayStart) return true
+      if (taskDay > todayStart) return false
+
+      const done = task.status === "COMPLETED" || task.completedAt != null
+      // Carried-over tasks stay visible on the day they get finished.
+      return !done || (task.completedAt != null && startOfLocalDay(task.completedAt) === todayStart)
+    })
+  }, [tasks, todayStart])
 }

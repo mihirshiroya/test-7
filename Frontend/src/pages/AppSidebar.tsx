@@ -25,8 +25,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../lib/utills'
 import ThemeSwitcher from './ThemeSwitcher'
-import logo from '../assets/logo.png'
-import textlogo from '../assets/text-logo.png'
+import { DottedText } from '../components/Ui/dotted-text'
 import noResultsRaw from '../assets/31-no-results.svg?raw'
 import { ThemedSvg } from '../lib/svg-theme'
 import {
@@ -427,20 +426,15 @@ function AppSidebar() {
                 'group flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-accent',
                 collapsed && 'md:justify-center',
               )}
+              aria-label="Consistent home"
             >
-             
-
               <span
                 className={cn(
-                  'flex min-w-0 flex-1 flex-col justify-end',
+                  'flex h-5 min-w-0 flex-1 items-center overflow-hidden',
                   hideWhenCollapsed,
                 )}
               >
-                <img
-  src={textlogo}
-  alt="Consistent"
-  className="h-5 w-auto object-contain object-left"
-/>
+                <h3 className="font-extrabold text-2xl text-primary text-pretty">Consistent</h3>
               </span>
             </button>
 
