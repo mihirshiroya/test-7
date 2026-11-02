@@ -8,6 +8,7 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "./empty"
 import { useTodayTasks } from "../../store/slices/taskSlice"
@@ -96,17 +97,16 @@ export function TodaysTasks() {
 
       {/* Empty state */}
       {tasks.length === 0 ? (
-        <Empty className="relative z-10 my-auto border-0 p-0">
+        <Empty size="md" className="relative z-10 my-auto border-0 p-0">
           <EmptyHeader>
             {/* Themed illustration replaces the icon */}
-            <ThemedSvg
-              raw={getStartedRaw}
-              className="mx-auto mb-2 h-40 w-40 [&>svg]:h-full [&>svg]:w-full"
-            />
+            <EmptyMedia variant="illustration">
+              <ThemedSvg raw={getStartedRaw} ariaLabel="No tasks illustration" />
+            </EmptyMedia>
 
             <EmptyTitle>No tasks for today</EmptyTitle>
 
-            <EmptyDescription className="text-center text-body-sm text-steel">
+            <EmptyDescription className="text-steel">
               You don&apos;t have any tasks scheduled for today.
             </EmptyDescription>
           </EmptyHeader>

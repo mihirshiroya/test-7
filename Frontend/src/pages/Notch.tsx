@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 
 import {
@@ -21,11 +21,57 @@ interface NotchNavbarProps {
   barBg?: string
   pageBg?: string
   ctaBg?: string
+  /** bottom corner radius (px) of the notch body */
   radius?: number
+  /** horizontal length (px) of the top flares on each side */
+  flare?: number
+  /** vertical drop (px) of the top flares */
+  flareHeight?: number
   /** 0–100: how solid the notch tint is (lower = more see-through glass) */
   glassOpacity?: number
   /** blur strength in px for content behind the notch */
   blur?: number
+}
+
+/**
+ * Builds the notch outline for a body of size (w x h) with long flares
+ * of horizontal length `fw` and vertical drop `fh` on both sides.
+ * Total shape width = w + 2*fw.
+ *
+ *  ────────────────────────────────  (flush with top of screen)
+ *    ╲___                    ___╱    (long, smooth flares)
+ *        │                  │
+ *         ╲________________╱         (rounded bottom corners)
+ */
+function buildNotchPath(
+  w: number,
+  h: number,
+  fw: number,
+  fh: number,
+  r: number
+) {
+  const W = w + 2 * fw
+
+  // keep geometry valid for small heights
+  const drop = Math.max(0, Math.min(fh, h - 4))
+  const rad = Math.min(r, Math.max(0, h - drop), w / 2)
+
+  return [
+    `M 0 0`,
+    `H ${W}`,
+    // right flare (long concave S-curve)
+    `C ${W - fw * 0.6} 0 ${W - fw} ${drop * 0.4} ${W - fw} ${drop}`,
+    `V ${h - rad}`,
+    // bottom-right corner (convex)
+    `Q ${W - fw} ${h} ${W - fw - rad} ${h}`,
+    `H ${fw + rad}`,
+    // bottom-left corner (convex)
+    `Q ${fw} ${h} ${fw} ${h - rad}`,
+    `V ${drop}`,
+    // left flare (long concave S-curve)
+    `C ${fw} ${drop * 0.4} ${fw * 0.6} 0 0 0`,
+    `Z`,
+  ].join(" ")
 }
 
 export default function NotchNavbar({
@@ -35,11 +81,15 @@ export default function NotchNavbar({
   barBg = "#17110F",
   pageBg = "#F5E8DF",
   ctaBg = "#FA6F45",
-  radius = 16,
+  radius = 18,
+  flare = 40,
+  flareHeight = 22,
   glassOpacity = 55,
   blur = 16,
 }: NotchNavbarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  const navRef = useRef<HTMLElement | null>(null)
 
   // --------------------------------------------------
   // IMPORTANT:
@@ -64,6 +114,20 @@ export default function NotchNavbar({
     20000
   )
 
+  // Measure the nav so the SVG outline matches it exactly
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+
+    const update = () =>
+      setSize({ w: el.offsetWidth, h: el.offsetHeight })
+
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [isAuthenticated])
+
   // --------------------------------------------------
   // Authentication guard
   // --------------------------------------------------
@@ -81,38 +145,24 @@ export default function NotchNavbar({
     : "00:00"
 
   // --------------------------------------------------
-  // SINGLE glass layer for the whole notch (left flare +
-  // body + right flare). One backdrop-filter = no seams.
-  // Layer is 300% of the nav width: [flare | body | flare]
+  // Single glass layer, clipped to the notch outline.
+  // One backdrop-filter + one clip-path = no seams.
   // --------------------------------------------------
 
-  const flareCut = (side: "left" | "right") =>
-    `radial-gradient(ellipse 100% 100% at ${
-      side === "left" ? "0" : "100%"
-    } 100%, transparent calc(100% - 1px), #000 100%)`
-
-  // The body piece overlaps the flares by 1px on each side so
-  // the mask pieces never leave a hairline gap between them.
-  const notchMask = [
-    "linear-gradient(#000, #000)", // body
-    flareCut("left"),
-    flareCut("right"),
-  ].join(", ")
+  const ready = size.w > 0 && size.h > 0
+  const notchPath = ready
+    ? buildNotchPath(size.w, size.h, flare, flareHeight, radius)
+    : undefined
 
   const glassLayerStyle: React.CSSProperties = {
+    left: -flare,
+    right: -flare,
     backgroundColor: `color-mix(in srgb, ${barBg} ${glassOpacity}%, transparent)`,
     backdropFilter: `blur(${blur}px) saturate(160%)`,
     WebkitBackdropFilter: `blur(${blur}px) saturate(160%)`,
-
-    WebkitMaskImage: notchMask,
-    maskImage: notchMask,
-    WebkitMaskRepeat: "no-repeat",
-    maskRepeat: "no-repeat",
-    WebkitMaskSize:
-      "calc(33.3333% + 2px) 100%, 33.3333% 100%, 33.3333% 100%",
-    maskSize: "calc(33.3333% + 2px) 100%, 33.3333% 100%, 33.3333% 100%",
-    WebkitMaskPosition: "50% 0, 0% 0, 100% 0",
-    maskPosition: "50% 0, 0% 0, 100% 0",
+    clipPath: notchPath ? `path('${notchPath}')` : undefined,
+    WebkitClipPath: notchPath ? `path('${notchPath}')` : undefined,
+    opacity: ready ? 1 : 0,
   }
 
   return (
@@ -122,6 +172,7 @@ export default function NotchNavbar({
       ========================== */}
       <header className="pointer-events-none fixed left-1/2 top-0 z-[9999] -translate-x-1/2">
         <nav
+          ref={navRef}
           className="
             pointer-events-auto
             relative
@@ -131,24 +182,18 @@ export default function NotchNavbar({
             items-center
             gap-5
             px-4
-            py-1
+            pb-1.5
+            pt-1
             shadow-none
             outline-none
           "
         >
           {/* =========================
-              GLASS LAYER (body + both flares in one piece)
+              GLASS LAYER (SVG-path clipped)
           ========================== */}
           <span
             aria-hidden="true"
-            className="
-              pointer-events-none
-              absolute
-              bottom-0
-              top-0
-              -left-full
-              w-[300%]
-            "
+            className="pointer-events-none absolute bottom-0 top-0"
             style={glassLayerStyle}
           />
 
@@ -227,11 +272,7 @@ export default function NotchNavbar({
           transition-transform
           duration-300
           ease-out
-          ${
-            sidebarOpen
-              ? "translate-x-0"
-              : "translate-x-full"
-          }
+          ${sidebarOpen ? "translate-x-0" : "translate-x-full"}
         `}
       >
         {/* =========================

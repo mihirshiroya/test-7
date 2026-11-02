@@ -25,6 +25,10 @@ import { ActivityHeatmap } from '../components/Ui/activity-heatmap'
 import { GRAIN_TEXTURE } from '../components/Ui/trend-chart'
 import { HeatmapSkeleton } from '../components/Ui/skeletons'
 import { PixelShape } from '../components/Ui/pixel-shape'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../components/Ui/empty'
+import { ThemedSvg } from '../lib/svg-theme'
+import checklistRaw from '../assets/02-checklist.svg?raw'
+import focusRaw from '../assets/03-focus.svg?raw'
 import { getProductivityShape } from '../lib/productivity-shapes'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
@@ -182,6 +186,19 @@ function ProductivityCard({
         <MonthToggle month={month} loading={loading} onMonthChange={onMonthChange} />
       </div>
 
+      {!loading && monthly && monthly.totalCompleted === 0 ? (
+        <Empty size="md" className="mt-6 min-h-52 sm:min-h-64 lg:min-h-72">
+          <EmptyHeader>
+            <EmptyMedia variant="illustration">
+              <ThemedSvg raw={checklistRaw} ariaLabel="No completed tasks" />
+            </EmptyMedia>
+            <EmptyTitle>No tasks completed in {monthLabel(month)}</EmptyTitle>
+            <EmptyDescription className="text-steel">
+              Finish a task and your daily progress will start stacking up here.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
       <div
         className={`relative mt-6 flex h-52 items-end gap-[3px] transition-opacity sm:h-64 lg:h-72 ${
           loading ? 'opacity-40' : ''
@@ -231,6 +248,7 @@ function ProductivityCard({
           })
         )}
       </div>
+      )}
 
       <MonthAxis month={month} />
     </section>
@@ -298,7 +316,19 @@ function FocusTimeCard({
       </div>
 
       <div className={`relative mt-4 transition-opacity ${loading ? 'opacity-40' : ''}`}>
-        {focus && pts.length > 0 ? (
+        {!loading && !failed && (!focus || focus.totalMinutes === 0) ? (
+          <Empty size="md">
+            <EmptyHeader>
+              <EmptyMedia variant="illustration">
+                <ThemedSvg raw={focusRaw} ariaLabel="No focus time" />
+              </EmptyMedia>
+              <EmptyTitle>No focus time in {monthLabel(month)}</EmptyTitle>
+              <EmptyDescription className="text-steel">
+                Start a focus session and your daily focus trend will appear here.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : focus && pts.length > 0 ? (
           <svg
             ref={ref}
             viewBox={`0 0 ${W} ${H}`}
@@ -373,10 +403,8 @@ function FocusTimeCard({
               >
                 Couldn&apos;t load focus time. Try again
               </button>
-            ) : loading ? (
-              'Loading…'
             ) : (
-              'No focus data for this month'
+              'Loading…'
             )}
           </div>
         )}

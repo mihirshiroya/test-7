@@ -3,6 +3,11 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import david from '../../assets/goggins-banner.png'
 import { PixelShape } from '../../components/Ui/pixel-shape'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../../components/Ui/empty'
+import { ThemedSvg } from '../../lib/svg-theme'
+import checklistRaw from '../../assets/02-checklist.svg?raw'
+import celebrationRaw from '../../assets/34-celebration.svg?raw'
+import plantingSeedsRaw from '../../assets/35-planting-seeds.svg?raw'
 import { ACTIVITY_GLYPHS, ARROW_DOWN, ARROW_UP, CHECK_GLYPH, MOON_GLYPH, OVERVIEW, PALETTE } from '../../lib/consistency'
 
 import {
@@ -602,11 +607,22 @@ export function AchievementsSection({ data }: { data: ProfileAnalytics | null })
       </ul>
 
       {data && visible.length === 0 && (
-        <p className="px-2.5 py-9 text-center text-xs text-steel">
-          {filter === 'Unlocked'
-            ? 'Your first spark is waiting. Complete a focus session to get started.'
-            : 'Every badge earned. What a journey.'}
-        </p>
+        <Empty size="sm" className="mt-4 border border-soft">
+          <EmptyHeader>
+            <EmptyMedia variant="illustration">
+              <ThemedSvg
+                raw={filter === 'Unlocked' ? plantingSeedsRaw : celebrationRaw}
+                ariaLabel={filter === 'Unlocked' ? 'No badges unlocked yet' : 'All badges unlocked'}
+              />
+            </EmptyMedia>
+            <EmptyTitle>{filter === 'Unlocked' ? 'No badges unlocked yet' : 'Every badge earned'}</EmptyTitle>
+            <EmptyDescription className="text-steel">
+              {filter === 'Unlocked'
+                ? 'Your first spark is waiting. Complete a focus session to get started.'
+                : 'Nothing left to unlock. What a journey.'}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </section>
   )
@@ -948,7 +964,19 @@ export function ProfileProjects({ projects }: { projects: ProjectSummary[] | nul
 
 
   {/* Task completion summary */}
-  {tasksReady ? (
+  {tasksReady && taskCounts.total === 0 ? (
+    <Empty size="md" className="mt-6 border border-soft rounded-none">
+      <EmptyHeader>
+        <EmptyMedia variant="illustration">
+          <ThemedSvg raw={checklistRaw} ariaLabel="No tasks yet" />
+        </EmptyMedia>
+        <EmptyTitle>No tasks yet</EmptyTitle>
+        <EmptyDescription className="text-steel">
+          Create your first task and your progress from start to finish will show up here.
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  ) : tasksReady ? (
     <div className="mt-1">
 
       <div className="mt-5">

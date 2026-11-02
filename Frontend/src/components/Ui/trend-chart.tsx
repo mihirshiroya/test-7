@@ -11,6 +11,7 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "./empty"
 
@@ -151,15 +152,13 @@ export function TrendChart({
             })}
           </div>
         ) : (
-          <Empty className="relative z-10 h-full min-h-[280px] border-0 p-0">
+          <Empty size="lg" className="relative z-10 h-full border-0 p-0">
             <EmptyHeader>
-              <ThemedSvg
-                raw={growthChartRaw}
-                ariaLabel="Growth chart illustration"
-                className="mx-auto mb-2 h-40 w-40 [&>svg]:h-full [&>svg]:w-full"
-              />
+              <EmptyMedia variant="illustration">
+                <ThemedSvg raw={growthChartRaw} ariaLabel="Growth chart illustration" />
+              </EmptyMedia>
               <EmptyTitle>No focus time recorded yet</EmptyTitle>
-              <EmptyDescription className="text-center text-body-sm text-steel">
+              <EmptyDescription className="text-steel">
                 Start a focused task to see your time trends here.
               </EmptyDescription>
             </EmptyHeader>

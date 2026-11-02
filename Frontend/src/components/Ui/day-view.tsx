@@ -8,6 +8,7 @@ import { Badge } from "./badge"
 import {
   Empty,
   EmptyDescription,
+  EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "./empty"
@@ -76,16 +77,18 @@ export function DayView({
       </div>
 
       {tasks.length === 0 ? (
-        <Empty className="flex-1">
-          <EmptyMedia variant="icon">
-            <CalendarDays />
-          </EmptyMedia>
+        <Empty size="md">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CalendarDays />
+            </EmptyMedia>
 
-          <EmptyTitle>Nothing scheduled</EmptyTitle>
+            <EmptyTitle>Nothing scheduled</EmptyTitle>
 
-          <EmptyDescription>
-            Tasks you add for this day will show up here.
-          </EmptyDescription>
+            <EmptyDescription>
+              Tasks you add for this day will show up here.
+            </EmptyDescription>
+          </EmptyHeader>
         </Empty>
       ) : (
         <div

@@ -13,7 +13,7 @@ import {
 import { SessionGantt } from "./session-gantt"
 import { ThemedSvg } from "../../lib/svg-theme"
 import noResultsRaw from "../../assets/31-no-results.svg?raw"
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from './empty'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from './empty'
 import { DateTimePicker } from './date-time-picker'
 import { localDayKey } from "./analytics-data"
 import { useAppDispatch, useAppSelector } from "../../store"
@@ -284,15 +284,13 @@ export function SessionHistory() {
           </h2>
 
           {sessions.length === 0 && (
-            <Empty className="min-h-40 p-2">
+            <Empty size="md">
               <EmptyHeader>
-                <ThemedSvg
-                  raw={noResultsRaw}
-                  ariaLabel="No sessions"
-                  className="mx-auto mb-2 h-40 w-40 [&>svg]:h-full [&>svg]:w-full"
-                />
+                <EmptyMedia variant="illustration">
+                  <ThemedSvg raw={noResultsRaw} ariaLabel="No sessions" />
+                </EmptyMedia>
                 <EmptyTitle>{loading ? "Loading sessions…" : "No focus sessions on this day."}</EmptyTitle>
-                <EmptyDescription className="text-center text-body-sm text-steel">
+                <EmptyDescription className="text-steel">
                   Complete a focus session to build your daily history.
                 </EmptyDescription>
               </EmptyHeader>
@@ -328,15 +326,13 @@ export function SessionHistory() {
           </h2>
 
           {byTask.length === 0 ? (
-            <Empty className="min-h-40 p-2">
+            <Empty size="md">
               <EmptyHeader>
-                <ThemedSvg
-                  raw={noResultsRaw}
-                  ariaLabel="No task activity"
-                  className="mx-auto mb-2 h-40 w-40 [&>svg]:h-full [&>svg]:w-full"
-                />
+                <EmptyMedia variant="illustration">
+                  <ThemedSvg raw={noResultsRaw} ariaLabel="No task activity" />
+                </EmptyMedia>
                 <EmptyTitle>No task activity to summarize.</EmptyTitle>
-                <EmptyDescription className="text-center text-body-sm text-steel">Focus sessions will appear here grouped by task.</EmptyDescription>
+                <EmptyDescription className="text-steel">Focus sessions will appear here grouped by task.</EmptyDescription>
               </EmptyHeader>
               <EmptyContent />
             </Empty>

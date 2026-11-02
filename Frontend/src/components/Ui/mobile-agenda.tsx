@@ -12,7 +12,7 @@ import {
   type Task,
 } from "../../lib/tasks"
 import { cn } from "../../lib/utills"
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "./empty"
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "./empty"
 import { CalendarDays } from "lucide-react"
 
 export function MobileAgenda({
@@ -42,12 +42,14 @@ export function MobileAgenda({
 
   if (daysWithTasks.length === 0) {
     return (
-      <Empty className="flex-1">
-        <EmptyMedia variant="icon">
-          <CalendarDays />
-        </EmptyMedia>
-        <EmptyTitle>No tasks this month</EmptyTitle>
-        <EmptyDescription>Tasks you add will show up here.</EmptyDescription>
+      <Empty size="md">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CalendarDays />
+          </EmptyMedia>
+          <EmptyTitle>No tasks this month</EmptyTitle>
+          <EmptyDescription>Tasks you add will show up here.</EmptyDescription>
+        </EmptyHeader>
       </Empty>
     )
   }
