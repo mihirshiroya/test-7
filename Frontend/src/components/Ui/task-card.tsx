@@ -451,8 +451,8 @@ export const TaskCard = memo(function TaskCard({
                 {Array.from({ length: 10 }).map((_, index) => (
                   <div
                     key={index}
-                    className={`h-2 flex-1 origin-left border-[0.5px] border-soft skew-x-20 transition-colors duration-300 ${
-                      index < completedSegments ? "bg-primary" : "bg-muted skew-x-0!"
+                    className={`h-2 flex-1 origin-left border-[0.5px] border-soft transition-colors duration-300 ${
+                      index < completedSegments ? "bg-primary skew-x-20" : "bg-muted -skew-x-20 "
                     }`}
                   />
                 ))}

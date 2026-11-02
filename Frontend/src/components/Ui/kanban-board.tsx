@@ -679,7 +679,7 @@ export function KanbanBoard({
 </div>
 
           {/* Create Task */}
-          {/* {workspaceId !== null && ( */}
+          {workspaceId != null && (
             <button
               type="button"
               onClick={() =>
@@ -693,7 +693,7 @@ export function KanbanBoard({
                 aria-hidden="true"
               />
             </button>
-          {/* )} */}
+          )}
         </div>
       </div>
 

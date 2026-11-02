@@ -9,7 +9,12 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react'
-import { AppDialog, AppDialogButton, AppDialogSection } from '../components/Ui/app-dialog'
+import {
+  AppDialog,
+  AppDialogButton,
+  AppDialogSection,
+  appDialogInputClass,
+} from '../components/Ui/app-dialog'
 
 import {
   formatMinutes,
@@ -20,7 +25,6 @@ import { ActivityHeatmap } from '../components/Ui/activity-heatmap'
 import { GRAIN_TEXTURE } from '../components/Ui/trend-chart'
 import { HeatmapSkeleton } from '../components/Ui/skeletons'
 import { PixelShape } from '../components/Ui/pixel-shape'
-import { TextField } from '../components/Ui/text-field'
 import { getProductivityShape } from '../lib/productivity-shapes'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
@@ -179,7 +183,7 @@ function ProductivityCard({
       </div>
 
       <div
-        className={`relative mt-6 flex h-36 items-end gap-[3px] transition-opacity ${
+        className={`relative mt-6 flex h-52 items-end gap-[3px] transition-opacity sm:h-64 lg:h-72 ${
           loading ? 'opacity-40' : ''
         }`}
         role="img"
@@ -455,20 +459,28 @@ function EditProfileModal({
         icon={<UserRound />}
         title="Your name"
         description="This is how you appear across the app."
+        htmlFor="profile-first-name"
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
-            label="First name"
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input
+            id="profile-first-name"
+            aria-label="First name"
             autoFocus
+            autoComplete="given-name"
             value={draft.firstName}
             maxLength={50}
             onChange={(e) => setDraft({ ...draft, firstName: e.target.value })}
+            placeholder="First name"
+            className={appDialogInputClass}
           />
-          <TextField
-            label="Last name"
+          <input
+            aria-label="Last name"
+            autoComplete="family-name"
             value={draft.lastName}
             maxLength={50}
             onChange={(e) => setDraft({ ...draft, lastName: e.target.value })}
+            placeholder="Last name"
+            className={appDialogInputClass}
           />
         </div>
 

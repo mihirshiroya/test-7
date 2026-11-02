@@ -150,12 +150,10 @@ export function SessionHistory() {
   return (
     <div className="mx-auto w-full">
       {/* Header */}
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight font-inter! text-foreground text-balance">
-            Session Log
-          </h1>
-        </div>
+      <header className="mb-8 flex items-center justify-between gap-3">
+        <h1 className="text-3xl font-semibold tracking-tight font-inter! text-foreground text-balance">
+          Session Log
+        </h1>
 
         {/* Date picker */}
         <DateTimePicker
@@ -164,7 +162,10 @@ export function SessionHistory() {
           maxValue={today}
           onChange={handleDateChange}
           clearable={false}
-          className="w-full font-inter! sm:w-64"
+          displayFormat="MMM d"
+          showChevron
+          className="shrink-0 font-inter!"
+          triggerClassName="h-8! w-auto! gap-1.5! px-2.5! text-xs! font-medium"
           placeholder={dateLabel}
         />
       </header>

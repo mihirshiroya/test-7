@@ -3,7 +3,7 @@ import {
   addDays, addMonths, endOfMonth, endOfWeek, format, isAfter, isBefore, isSameDay, isSameMonth,
   isToday, isValid, parse, startOfDay, startOfMonth, startOfWeek, subMonths,
 } from "date-fns"
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, X } from "lucide-react"
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Clock, X } from "lucide-react"
 import { AnchoredPopover } from "./popup"
 
 // Value formats match the native datetime-local / date inputs.
@@ -25,6 +25,8 @@ interface DateTimePickerProps {
   clearable?: boolean
   className?: string
   triggerClassName?: string
+  displayFormat?: string
+  showChevron?: boolean
 }
 
 function parseValue(value: string, valueFormat: string): Date | null {
@@ -53,6 +55,8 @@ export function DateTimePicker({
   clearable = true,
   className = "",
   triggerClassName = "",
+  displayFormat = "EEE, MMM d, yyyy",
+  showChevron = false,
 }: DateTimePickerProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dialogId = useId()
@@ -152,10 +156,10 @@ export function DateTimePicker({
           onClick={() => setOpen((o) => !o)}
           className={`flex h-9 w-full items-center gap-2.5 border border-soft bg-background px-3 ${clearable ? "pr-9" : "pr-3"} text-left text-sm outline-none transition hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring ${open ? "ring-2 ring-ring" : ""} ${triggerClassName}`}
         >
-          <CalendarDays size={16} aria-hidden className="shrink-0 text-muted-foreground" />
+          <CalendarDays size={16} aria-hidden className="shrink-0 text-steel" />
           {selected ? (
             <span className="flex min-w-0 items-center gap-2 truncate text-foreground">
-              <span>{format(selected, "EEE, MMM d, yyyy")}</span>
+              <span>{format(selected, displayFormat)}</span>
               {!dateOnly && (
                 <>
                   <span aria-hidden className="h-3.5 w-px bg-border" />
@@ -165,6 +169,13 @@ export function DateTimePicker({
             </span>
           ) : (
             <span className="text-muted-foreground">{placeholder ?? (dateOnly ? "Pick a date" : "Pick date & time")}</span>
+          )}
+          {showChevron && (
+            <ChevronDown
+              size={14}
+              aria-hidden
+              className={`ml-auto shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+            />
           )}
         </button>
         {selected && clearable && (

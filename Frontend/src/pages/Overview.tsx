@@ -11,7 +11,7 @@ import { CustomSelect, type SelectOption } from "../components/Ui/custom-select"
 
 import { StatCard } from "../components/Ui/stat-card"
 import { TrendChart } from "../components/Ui/trend-chart"
-import { ActivityHeatmap } from "../components/Ui/activity-heatmap"
+import { WeeklyHeatmap } from "../components/Ui/weekly-heatmap"
 import { TodaysTasks } from "../components/Ui/todays-tasks"
 import { RecentActivity } from "../components/Ui/recent-activity"
 
@@ -149,7 +149,7 @@ export default function Overview() {
           </div>
 
           <div className="lg:col-span-2">
-            {loading ? <HeatmapSkeleton /> : <ActivityHeatmap cells={data.heatmap} />}
+            {loading ? <HeatmapSkeleton /> : <WeeklyHeatmap cells={data.heatmap} />}
           </div>
         </section>
       </div>

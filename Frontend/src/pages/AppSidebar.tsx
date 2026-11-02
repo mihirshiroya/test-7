@@ -55,7 +55,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/Ui/dropdown-menu'
 
@@ -378,6 +377,9 @@ function AppSidebar() {
       setSaving(false)
     }
   }
+  const profileMenuItemClass =
+    'cursor-pointer gap-2.5 px-2.5 py-2 text-sm transition-colors focus:bg-muted data-[variant=destructive]:focus:bg-muted'
+
   const dispatch = useDispatch<AppDispatch>()
   const handleLogout = async () => {
   try {
@@ -674,14 +676,24 @@ function AppSidebar() {
                 >
                   AM
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => go('/profile')}>
-                    <Settings />
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={6}
+                  className="flex w-48 flex-col gap-0.5 p-1 shadow-xl"
+                >
+                  <DropdownMenuItem
+                    onClick={() => go('/profile')}
+                    className={profileMenuItemClass}
+                  >
+                    <Settings className="size-4 text-muted-foreground" />
                     Account settings
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-                    <LogOut />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={handleLogout}
+                    className={profileMenuItemClass}
+                  >
+                    <LogOut className="size-4" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
